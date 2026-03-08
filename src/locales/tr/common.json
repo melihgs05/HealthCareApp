@@ -5,7 +5,8 @@
     "home": "Ana Sayfa",
     "about": "Hakkımızda",
     "contacts": "İletişim",
-    "account": "Hesap"
+    "account": "Hesap",
+    "portal": "Portalım"
   },
   "actions": {
     "signIn": "Giriş Yap",

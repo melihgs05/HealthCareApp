@@ -5,7 +5,8 @@
     "home": "Home",
     "about": "About",
     "contacts": "Contacts",
-    "account": "Account"
+    "account": "Account",
+    "portal": "My Portal"
   },
   "actions": {
     "signIn": "Sign in",
