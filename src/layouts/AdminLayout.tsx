@@ -16,7 +16,7 @@ export function AdminLayout() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <AppNavbar />
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl gap-0 lg:gap-6 px-0 py-0 lg:px-4 lg:pt-20 lg:pb-6">
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl gap-0 md:gap-6 px-0 pt-16 pb-0 md:px-4 md:pt-20 md:pb-6">
         <aside className="hidden w-64 flex-shrink-0 flex-col rounded-3xl bg-white p-5 shadow-md shadow-slate-100 ring-1 ring-slate-100 dark:bg-slate-800 dark:shadow-slate-900 dark:ring-slate-700 md:flex self-start sticky top-[84px]">
           <Link to="/" className="flex items-center gap-3 group">
             <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-900 dark:bg-slate-600 text-sm font-semibold text-white">
@@ -69,6 +69,27 @@ export function AdminLayout() {
             </div>
 
           </header>
+
+          {/* Mobile tab bar – visible only when sidebar is hidden */}
+          <nav className="mb-3 flex gap-1.5 overflow-x-auto px-4 pb-1 md:hidden">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end
+                className={({ isActive }) =>
+                  [
+                    'flex-shrink-0 rounded-xl px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors',
+                    isActive
+                      ? 'bg-slate-900 text-white shadow-sm dark:bg-slate-600'
+                      : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700 dark:hover:bg-slate-700',
+                  ].join(' ')
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
 
           <section className="flex-1 px-4 pb-8 lg:px-0">
             <Outlet />
