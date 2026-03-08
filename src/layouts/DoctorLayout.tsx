@@ -2,14 +2,14 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { AppNavbar } from '../components/ui/AppNavbar'
-import { Avatar } from '../components/ui/Avatar'
 
 export function DoctorLayout() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const { t } = useTranslation(['doctor', 'common'])
 
   const navItems = [
     { to: '/doctor', label: t('doctor:nav.today') },
+    { to: '/doctor/settings', label: t('common:settings.accountSettings') },
   ]
 
   return (
@@ -19,7 +19,7 @@ export function DoctorLayout() {
         <aside className="hidden w-64 flex-shrink-0 flex-col rounded-3xl bg-white p-5 shadow-md shadow-slate-100 ring-1 ring-slate-100 dark:bg-slate-800 dark:shadow-slate-900 dark:ring-slate-700 md:flex self-start sticky top-[84px]">
           <Link to="/" className="flex items-center gap-3 group">
             <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-600 text-sm font-semibold text-white">
-              CB
+              {user?.name ? user.name.split(' ').filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('') : 'CB'}
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -67,22 +67,6 @@ export function DoctorLayout() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 rounded-full bg-emerald-800/80 px-3 py-1.5 text-xs sm:text-sm">
-                <Avatar name={user?.name ?? 'D'} size="sm" colorClass="bg-emerald-700 text-white" />
-                <div className="hidden text-left text-[0.7rem] sm:block">
-                  <p className="font-medium">{user?.name}</p>
-                  <p className="text-emerald-200">{t('doctor:layout.doctorAccount')}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="ml-1 rounded-full bg-emerald-50 px-3 py-1 text-[0.7rem] font-medium text-emerald-900 shadow-sm hover:bg-white"
-                >
-                  {t('common:actions.signOut')}
-                </button>
-              </div>
-            </div>
           </header>
 
           <section className="flex-1 px-4 pb-8 lg:px-0">

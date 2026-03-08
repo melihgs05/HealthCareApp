@@ -74,5 +74,27 @@
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "required": "This field is required."
+  },
+  "settings": {
+    "title": "Account Settings",
+    "subtitle": "Manage your personal information and security preferences.",
+    "profileSection": "Personal Information",
+    "passwordSection": "Change Password",
+    "fullName": "Full name",
+    "email": "Email address",
+    "phone": "Phone number",
+    "address": "Home address",
+    "city": "City",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "saveProfile": "Save changes",
+    "savePassword": "Update password",
+    "profileSaved": "Profile updated successfully.",
+    "passwordSaved": "Password updated successfully.",
+    "passwordMismatch": "New passwords do not match.",
+    "passwordTooShort": "Password must be at least 8 characters.",
+    "accountSettings": "Account Settings",
+    "signOut": "Sign out"
   }
 }

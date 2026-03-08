@@ -16,6 +16,7 @@ import { MedicalSummaryPage } from './pages/MedicalSummaryPage'
 import { ActivityPage } from './pages/ActivityPage'
 import { MessagesPage } from './pages/MessagesPage'
 import { VisitSummaryPage } from './pages/VisitSummaryPage'
+import { AccountSettingsPage } from './pages/AccountSettingsPage'
 import { DoctorDashboardPage } from './pages/DoctorDashboardPage'
 import { AdminDashboardPage } from './pages/AdminDashboardPage'
 
@@ -95,6 +96,7 @@ function App() {
           <Route path="/portal/history" element={<ActivityPage />} />
           <Route path="/portal/messages" element={<MessagesPage />} />
           <Route path="/portal/visit-summary" element={<VisitSummaryPage />} />
+          <Route path="/portal/settings" element={<AccountSettingsPage />} />
         </Route>
 
         <Route
@@ -105,6 +107,7 @@ function App() {
           }
         >
           <Route path="/doctor" element={<DoctorDashboardPage />} />
+          <Route path="/doctor/settings" element={<AccountSettingsPage />} />
         </Route>
 
         <Route
@@ -115,6 +118,7 @@ function App() {
           }
         >
           <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/settings" element={<AccountSettingsPage />} />
         </Route>
 
         <Route

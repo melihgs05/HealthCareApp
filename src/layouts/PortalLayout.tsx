@@ -3,10 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { usePatientData } from '../context/PatientDataContext'
 import { AppNavbar } from '../components/ui/AppNavbar'
-import { Avatar } from '../components/ui/Avatar'
 
 export function PortalLayout() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const { profile, nextAppointment } = usePatientData()
   const { t } = useTranslation(['portal', 'common'])
 
@@ -17,6 +16,7 @@ export function PortalLayout() {
     { to: '/portal/history', label: t('portal:nav.history') },
     { to: '/portal/messages', label: t('portal:nav.messages') },
     { to: '/portal/visit-summary', label: t('portal:nav.visitSummary') },
+    { to: '/portal/settings', label: t('common:settings.accountSettings') },
   ]
 
   return (
@@ -27,7 +27,7 @@ export function PortalLayout() {
         <aside className="hidden w-64 flex-shrink-0 flex-col rounded-3xl bg-white p-5 shadow-md shadow-slate-100 ring-1 ring-slate-100 dark:bg-slate-800 dark:shadow-slate-900 dark:ring-slate-700 md:flex self-start sticky top-[84px]">
           <Link to="/" className="flex items-center gap-3 group">
             <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-sky-600 text-sm font-semibold text-white">
-              CB
+              {user?.name ? user.name.split(' ').filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('') : 'CB'}
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -100,21 +100,6 @@ export function PortalLayout() {
                   </p>
                 </div>
               )}
-
-              <div className="flex items-center gap-2 rounded-full bg-sky-800/80 px-3 py-1.5">
-                <Avatar name={user?.name ?? 'U'} size="sm" colorClass="bg-sky-700 text-white" />
-                <div className="hidden text-left text-[0.7rem] sm:block">
-                  <p className="font-medium">{user?.name}</p>
-                  <p className="text-sky-200">{user?.email}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="ml-1 rounded-full bg-sky-50 px-3 py-1 text-[0.7rem] font-medium text-sky-900 shadow-sm hover:bg-white"
-                >
-                  {t('common:actions.signOut')}
-                </button>
-              </div>
             </div>
           </header>
 
