@@ -29,6 +29,8 @@ import { PersonnelManagementPage } from './pages/PersonnelManagementPage'
 import { PersonnelDashboardPage } from './pages/PersonnelDashboardPage'
 import { PersonnelTasksPage } from './pages/PersonnelTasksPage'
 import { PersonnelMessagesPage } from './pages/PersonnelMessagesPage'
+import { AuditLogPage } from './pages/AuditLogPage'
+import { HIPAAIdleWarning } from './components/ui/HIPAAIdleWarning'
 import type { UserRole } from './api/types'
 
 function roleHomePath(role: UserRole) {
@@ -63,6 +65,7 @@ function App() {
 
   return (
     <>
+      <HIPAAIdleWarning />
       <Toaster
         position="top-right"
         toastOptions={{
@@ -150,6 +153,7 @@ function App() {
         >
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/personnel" element={<PersonnelManagementPage />} />
+          <Route path="/admin/audit-log" element={<AuditLogPage />} />
           <Route path="/admin/site-settings" element={<SiteSettingsPage />} />
           <Route path="/admin/settings" element={<AccountSettingsPage />} />
         </Route>

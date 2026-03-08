@@ -1,15 +1,25 @@
+import type { ReactNode } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { AppNavbar } from '../components/ui/AppNavbar'
 
+function ShieldIcon() {
+  return (
+    <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+    </svg>
+  )
+}
+
 export function AdminLayout() {
   const { user } = useAuth()
   const { t } = useTranslation(['admin', 'common'])
 
-  const navItems = [
+  const navItems: { to: string; label: string; icon?: ReactNode }[] = [
     { to: '/admin', label: t('admin:nav.overview') },
     { to: '/admin/personnel', label: 'Personnel' },
+    { to: '/admin/audit-log', label: 'Audit Log', icon: <ShieldIcon /> },
     { to: '/admin/site-settings', label: t('admin:nav.siteSettings') },
     { to: '/admin/settings', label: t('common:settings.accountSettings') },
   ]
@@ -48,7 +58,10 @@ export function AdminLayout() {
                   ].join(' ')
                 }
               >
-                <span>{item.label}</span>
+                <span className="flex items-center gap-2">
+                  {item.icon}
+                  {item.label}
+                </span>
                 <span className="h-1.5 w-1.5 rounded-full bg-slate-200 dark:bg-slate-600" />
               </NavLink>
             ))}

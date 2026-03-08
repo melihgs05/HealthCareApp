@@ -9,6 +9,7 @@ import { NotificationsProvider } from './context/NotificationsContext'
 import { AuthProvider } from './context/AuthContext'
 import { PatientDataProvider } from './context/PatientDataContext'
 import { SiteSettingsProvider } from './context/SiteSettingsContext'
+import { HIPAAProvider } from './context/HIPAAContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -18,7 +19,9 @@ createRoot(document.getElementById('root')!).render(
           <NotificationsProvider>
             <PatientDataProvider>
               <BrowserRouter>
-                <App />
+                <HIPAAProvider>
+                  <App />
+                </HIPAAProvider>
               </BrowserRouter>
             </PatientDataProvider>
           </NotificationsProvider>

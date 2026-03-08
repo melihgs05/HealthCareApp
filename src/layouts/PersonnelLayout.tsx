@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { AppNavbar } from '../components/ui/AppNavbar'
+import { HIPAANotice } from '../components/ui/HIPAANotice'
 import type { PersonnelSubrole } from '../api/types'
 
 const subroleLabel: Record<PersonnelSubrole | string, string> = {
@@ -40,6 +41,7 @@ export function PersonnelLayout() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <HIPAANotice />
       <AppNavbar />
       <div className="mx-auto flex min-h-screen w-full max-w-7xl gap-0 md:gap-6 px-0 pt-16 pb-0 md:px-4 md:pt-20 md:pb-6">
         <aside className="hidden w-64 flex-shrink-0 flex-col rounded-3xl bg-white p-5 shadow-md shadow-slate-100 ring-1 ring-slate-100 dark:bg-slate-800 dark:shadow-slate-900 dark:ring-slate-700 md:flex self-start sticky top-[84px]">

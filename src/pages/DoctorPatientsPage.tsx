@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { Badge } from '../components/ui'
 import { fetchPatientList } from '../api/doctorApi'
+import { patientChartPath } from '../utils/hipaa'
 import type { PatientSummaryDTO } from '../api/types'
 import { isSupabaseConfigured } from '../lib/supabase'
 
@@ -109,7 +110,7 @@ export function DoctorPatientsPage() {
                     <td className="py-2.5">
                       <button
                         type="button"
-                        onClick={() => navigate(`/doctor/patients/${p.id}/chart`)}
+                        onClick={() => navigate(patientChartPath(p.id))}
                         className="rounded-xl bg-emerald-600 px-3 py-1 text-[0.7rem] font-medium text-white hover:bg-emerald-700 transition-colors"
                       >
                         Open Chart

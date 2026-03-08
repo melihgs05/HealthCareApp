@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { Badge } from '../components/ui'
+import { logPHIAccess } from '../api/auditApi'
+import { decodePhiId } from '../utils/hipaa'
 import {
   fetchPatientList,
   fetchPatientMedications,
@@ -74,8 +76,17 @@ const DEMO_APPTS: AppointmentDTO[] = [
 
 type Tab = 'chart' | 'medications' | 'results' | 'notes' | 'appointments' | 'prescribe' | 'lab'
 
+const TAB_AUDIT_MAP: Partial<Record<Tab, import('../api/auditApi').AuditAction>> = {
+  medications: 'phi_view_medications',
+  results: 'phi_view_test_results',
+  notes: 'phi_view_notes',
+  appointments: 'phi_view_appointments',
+}
+
 export function PatientChartPage() {
   const { patientId: paramId } = useParams<{ patientId: string }>()
+  // Decode obfuscated patient ID from the URL (HIPAA: PHI must not appear in plain-text routes)
+  const rawPatientId = paramId ? decodePhiId(paramId) : undefined
   const navigate = useNavigate()
   const { user } = useAuth()
 
@@ -127,21 +138,34 @@ export function PatientChartPage() {
   useEffect(() => {
     if (!isSupabaseConfigured || !user) {
       setPatients(DEMO_PATIENTS)
-      if (paramId) setSelectedPatient(DEMO_PATIENTS.find((p) => p.id === paramId) ?? DEMO_PATIENTS[0])
+      if (rawPatientId) setSelectedPatient(DEMO_PATIENTS.find((p) => p.id === rawPatientId) ?? DEMO_PATIENTS[0])
       else setSelectedPatient(DEMO_PATIENTS[0])
       return
     }
     fetchPatientList(user.id).then((list) => {
       setPatients(list)
-      if (paramId) setSelectedPatient(list.find((p) => p.id === paramId) ?? list[0] ?? null)
+      if (rawPatientId) setSelectedPatient(list.find((p) => p.id === rawPatientId) ?? list[0] ?? null)
       else setSelectedPatient(list[0] ?? null)
     }).catch(console.error)
-  }, [user, paramId])
+  }, [user, rawPatientId])
 
   useEffect(() => {
     if (!selectedPatient) return
     const load = async () => {
       setLoading(true)
+      // Audit: log chart access
+      if (user) {
+        logPHIAccess({
+          userId: user.id,
+          userName: user.name,
+          userRole: user.role,
+          action: 'phi_view_chart',
+          resourceType: 'patient',
+          resourceId: selectedPatient.id,
+          patientId: selectedPatient.id,
+          patientName: selectedPatient.name,
+        })
+      }
       try {
         if (!isSupabaseConfigured) {
           setMedications(DEMO_MEDS)
@@ -392,7 +416,22 @@ export function PatientChartPage() {
               <button
                 key={t.key}
                 type="button"
-                onClick={() => setTab(t.key)}
+                onClick={() => {
+                  setTab(t.key)
+                  const action = TAB_AUDIT_MAP[t.key]
+                  if (action && user && selectedPatient) {
+                    logPHIAccess({
+                      userId: user.id,
+                      userName: user.name,
+                      userRole: user.role,
+                      action,
+                      resourceType: 'patient',
+                      resourceId: selectedPatient.id,
+                      patientId: selectedPatient.id,
+                      patientName: selectedPatient.name,
+                    })
+                  }
+                }}
                 className={[
                   'flex-shrink-0 rounded-xl px-3 py-1.5 mt-2 text-xs font-medium transition-colors',
                   tab === t.key

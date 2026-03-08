@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { Badge, Avatar } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { fetchTodaySchedule, fetchPatientList, fetchDoctorInbox } from '../api/doctorApi'
+import { patientChartPath } from '../utils/hipaa'
 import type { DoctorScheduleDTO, PatientSummaryDTO, MessageDTO } from '../api/types'
 import { isSupabaseConfigured } from '../lib/supabase'
 
@@ -129,7 +130,7 @@ export function DoctorDashboardPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => appt.patientId ? navigate(`/doctor/patients/${appt.patientId}/chart`) : toast.error('Patient ID not available')}
+                  onClick={() => appt.patientId ? navigate(patientChartPath(appt.patientId)) : toast.error('Patient ID not available')}
                   className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[0.7rem] font-medium text-emerald-900 hover:bg-white dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
                 >
                   {t('doctor:dashboard.openChart')}
@@ -148,9 +149,9 @@ export function DoctorDashboardPage() {
             </h2>
             <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
               {[
-                { key: 'addNote', color: 'bg-sky-50 text-sky-900 border-sky-100 hover:bg-white dark:bg-sky-900/20 dark:text-sky-300 dark:border-sky-800', path: todayAppointments[0]?.patientId ? `/doctor/patients/${todayAppointments[0].patientId}/chart` : '/doctor/patients' },
-                { key: 'ePrescribe', color: 'bg-emerald-50 text-emerald-900 border-emerald-100 hover:bg-white dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800', path: todayAppointments[0]?.patientId ? `/doctor/patients/${todayAppointments[0].patientId}/chart` : '/doctor/patients' },
-                { key: 'orderLab', color: 'bg-indigo-50 text-indigo-900 border-indigo-100 hover:bg-white dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800', path: todayAppointments[0]?.patientId ? `/doctor/patients/${todayAppointments[0].patientId}/chart` : '/doctor/patients' },
+                { key: 'addNote', color: 'bg-sky-50 text-sky-900 border-sky-100 hover:bg-white dark:bg-sky-900/20 dark:text-sky-300 dark:border-sky-800', path: todayAppointments[0]?.patientId ? patientChartPath(todayAppointments[0].patientId) : '/doctor/patients' },
+                { key: 'ePrescribe', color: 'bg-emerald-50 text-emerald-900 border-emerald-100 hover:bg-white dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800', path: todayAppointments[0]?.patientId ? patientChartPath(todayAppointments[0].patientId) : '/doctor/patients' },
+                { key: 'orderLab', color: 'bg-indigo-50 text-indigo-900 border-indigo-100 hover:bg-white dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800', path: todayAppointments[0]?.patientId ? patientChartPath(todayAppointments[0].patientId) : '/doctor/patients' },
               ].map(({ key, color, path }) => (
                 <button
                   key={key}
@@ -241,7 +242,7 @@ export function DoctorDashboardPage() {
                       <Badge variant={p.status === 'Active' ? 'success' : p.status === 'Follow-up' ? 'info' : 'warning'}>
                         {p.status}
                       </Badge>
-                      <button type="button" onClick={() => navigate(`/doctor/patients/${p.id}/chart`)} className="rounded-xl bg-emerald-600 px-2 py-0.5 text-[0.65rem] font-medium text-white hover:bg-emerald-700">
+                      <button type="button" onClick={() => navigate(patientChartPath(p.id))} className="rounded-xl bg-emerald-600 px-2 py-0.5 text-[0.65rem] font-medium text-white hover:bg-emerald-700">
                         Chart
                       </button>
                     </div>
