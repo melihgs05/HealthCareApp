@@ -5,6 +5,7 @@ import { ThemeToggle } from './ThemeToggle'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { NotificationBell } from './NotificationBell'
 import { useAuth } from '../../context/AuthContext'
+import { useSiteSettings } from '../../context/SiteSettingsContext'
 
 function getInitials(name: string) {
   return name
@@ -22,6 +23,7 @@ interface AppNavbarProps {
 export function AppNavbar({ showLinks = false }: AppNavbarProps) {
   const { t } = useTranslation('common')
   const { isAuthenticated, user, logout } = useAuth()
+  const { settings } = useSiteSettings()
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -64,7 +66,7 @@ export function AppNavbar({ showLinks = false }: AppNavbarProps) {
             </svg>
           </div>
           <span className="text-sm text-slate-900 dark:text-white">
-            {t('appName')}
+            {settings.appName}
           </span>
         </Link>
 

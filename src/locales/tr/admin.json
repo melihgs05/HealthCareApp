@@ -10,7 +10,8 @@
     "overview": "Genel Bakış",
     "users": "Kullanıcılar",
     "reports": "Raporlar",
-    "settings": "Ayarlar"
+    "settings": "Ayarlar",
+    "siteSettings": "Site Ayarları"
   },
   "dashboard": {
     "activePatients": "Aktif hastalar",

@@ -10,7 +10,8 @@
     "overview": "Overview",
     "users": "Users",
     "reports": "Reports",
-    "settings": "Settings"
+    "settings": "Settings",
+    "siteSettings": "Site Settings"
   },
   "dashboard": {
     "activePatients": "Active patients",

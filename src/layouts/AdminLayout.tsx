@@ -9,6 +9,7 @@ export function AdminLayout() {
 
   const navItems = [
     { to: '/admin', label: t('admin:nav.overview') },
+    { to: '/admin/site-settings', label: t('admin:nav.siteSettings') },
     { to: '/admin/settings', label: t('common:settings.accountSettings') },
   ]
 

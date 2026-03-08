@@ -17,6 +17,7 @@ import { ActivityPage } from './pages/ActivityPage'
 import { MessagesPage } from './pages/MessagesPage'
 import { VisitSummaryPage } from './pages/VisitSummaryPage'
 import { AccountSettingsPage } from './pages/AccountSettingsPage'
+import { SiteSettingsPage } from './pages/SiteSettingsPage'
 import { DoctorDashboardPage } from './pages/DoctorDashboardPage'
 import { AdminDashboardPage } from './pages/AdminDashboardPage'
 
@@ -118,6 +119,7 @@ function App() {
           }
         >
           <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/site-settings" element={<SiteSettingsPage />} />
           <Route path="/admin/settings" element={<AccountSettingsPage />} />
         </Route>
 

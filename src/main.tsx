@@ -8,19 +8,22 @@ import { ThemeProvider } from './context/ThemeContext'
 import { NotificationsProvider } from './context/NotificationsContext'
 import { AuthProvider } from './context/AuthContext'
 import { PatientDataProvider } from './context/PatientDataContext'
+import { SiteSettingsProvider } from './context/SiteSettingsContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
-      <NotificationsProvider>
-        <AuthProvider>
-          <PatientDataProvider>
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
-          </PatientDataProvider>
-        </AuthProvider>
-      </NotificationsProvider>
+      <SiteSettingsProvider>
+        <NotificationsProvider>
+          <AuthProvider>
+            <PatientDataProvider>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </PatientDataProvider>
+          </AuthProvider>
+        </NotificationsProvider>
+      </SiteSettingsProvider>
     </ThemeProvider>
   </StrictMode>,
 )
