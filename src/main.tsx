@@ -14,15 +14,15 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <SiteSettingsProvider>
-        <NotificationsProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <NotificationsProvider>
             <PatientDataProvider>
               <BrowserRouter>
                 <App />
               </BrowserRouter>
             </PatientDataProvider>
-          </AuthProvider>
-        </NotificationsProvider>
+          </NotificationsProvider>
+        </AuthProvider>
       </SiteSettingsProvider>
     </ThemeProvider>
   </StrictMode>,

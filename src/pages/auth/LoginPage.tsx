@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
+import type { UserRole, PersonnelSubrole } from '../../api/types'
 
 export function LoginPage() {
   const { login } = useAuth()
@@ -9,7 +10,8 @@ export function LoginPage() {
   const { t } = useTranslation('auth')
   const [email, setEmail] = useState('alex.johnson@example.com')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState<'patient' | 'doctor' | 'admin'>('patient')
+  const [role, setRole] = useState<UserRole>('patient')
+  const [subrole, setSubrole] = useState<PersonnelSubrole>('lab')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -20,7 +22,10 @@ export function LoginPage() {
     try {
       await login({ email, password, role })
       const target =
-        role === 'doctor' ? '/doctor' : role === 'admin' ? '/admin' : '/portal'
+        role === 'doctor' ? '/doctor'
+        : role === 'admin' ? '/admin'
+        : role === 'personnel' ? '/staff'
+        : '/portal'
       navigate(target, { replace: true })
     } catch {
       setError(t('auth:login.error'))
@@ -61,16 +66,17 @@ export function LoginPage() {
           <legend className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
             {t('auth:login.signinAs')}
           </legend>
-          <div className="mt-1 grid grid-cols-3 gap-2">
+          <div className="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {([
               ['patient', t('auth:roles.patient')] as const,
               ['doctor', t('auth:roles.doctor')] as const,
               ['admin', t('auth:roles.admin')] as const,
+              ['personnel', t('auth:roles.personnel')] as const,
             ]).map(([value, label]) => (
               <button
                 key={value}
                 type="button"
-                onClick={() => setRole(value)}
+                onClick={() => setRole(value as UserRole)}
                 className={[
                   'rounded-xl border px-2 py-1.5 text-xs font-medium transition',
                   role === value
@@ -82,6 +88,34 @@ export function LoginPage() {
               </button>
             ))}
           </div>
+          {role === 'personnel' && (
+            <div className="mt-2">
+              <label className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                {t('auth:subroles.lab') === 'Laboratory Tech' ? 'Staff type' : 'Personel türü'}
+              </label>
+              <div className="mt-1 grid grid-cols-3 gap-2">
+                {([
+                  ['lab', t('auth:subroles.lab')] as const,
+                  ['nurse', t('auth:subroles.nurse')] as const,
+                  ['desk', t('auth:subroles.desk')] as const,
+                ]).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setSubrole(value)}
+                    className={[
+                      'rounded-xl border px-2 py-1.5 text-xs font-medium transition',
+                      subrole === value
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-900 dark:border-indigo-500 dark:bg-indigo-900/30 dark:text-indigo-200'
+                        : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300',
+                    ].join(' ')}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </fieldset>
 
         <div className="space-y-1 text-sm">

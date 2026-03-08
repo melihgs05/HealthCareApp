@@ -1,7 +1,15 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { usePatientData } from '../context/PatientDataContext'
+import { fetchDoctors } from '../api/patientApi'
+import type { DoctorInfoDTO } from '../api/types'
+import { isSupabaseConfigured } from '../lib/supabase'
+
+const DEMO_DOCTORS: DoctorInfoDTO[] = [
+  { id: 'demo-doctor-001', name: 'Dr. Emily Carter', specialty: 'Internal Medicine', consultationRoom: 'Room 3A', availableDays: [1,2,3,4,5] },
+  { id: 'demo-doctor-002', name: 'Dr. Michael Lee', specialty: 'Cardiology', consultationRoom: 'Room 2B', availableDays: [1,3,5] },
+]
 
 export function MessagesPage() {
   const { messages, addMessage } = usePatientData()
@@ -9,19 +17,38 @@ export function MessagesPage() {
   const [isComposing, setIsComposing] = useState(false)
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [doctors, setDoctors] = useState<DoctorInfoDTO[]>([])
+  const [selectedDoctorId, setSelectedDoctorId] = useState('')
 
-  const handleSubmit = (event: FormEvent) => {
+  useEffect(() => {
+    const load = async () => {
+      if (!isSupabaseConfigured) { setDoctors(DEMO_DOCTORS); return }
+      try { setDoctors(await fetchDoctors()) } catch { setDoctors(DEMO_DOCTORS) }
+    }
+    void load()
+  }, [])
+
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     if (!subject.trim() || !body.trim()) return
-    addMessage({
-      from: 'You',
-      subject: subject.trim(),
-      body: body.trim(),
-    })
-    setSubject('')
-    setBody('')
-    setIsComposing(false)
-    toast.success(t('portal:messages.sentSuccess'))
+    setSubmitting(true)
+    try {
+      await addMessage({
+        toId: selectedDoctorId || (doctors[0]?.id ?? ''),
+        from: 'You',
+        subject: subject.trim(),
+        body: body.trim(),
+      })
+      setSubject('')
+      setBody('')
+      setIsComposing(false)
+      toast.success(t('portal:messages.sentSuccess'))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send message')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -46,13 +73,25 @@ export function MessagesPage() {
 
       {isComposing && (
         <form
-          onSubmit={handleSubmit}
+          onSubmit={(e) => void handleSubmit(e)}
           className="rounded-3xl bg-white p-4 shadow-sm shadow-slate-100 ring-1 ring-slate-100 dark:bg-slate-800 dark:shadow-slate-900 dark:ring-slate-700"
         >
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             {t('portal:messages.composeTitle')}
           </p>
           <div className="mt-2 space-y-2 text-xs">
+            <select
+              value={selectedDoctorId}
+              onChange={(e) => setSelectedDoctorId(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+            >
+              <option className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100" value="">— Select recipient —</option>
+              {doctors.map((d) => (
+                <option className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100" key={d.id} value={d.id}>
+                  {d.name}{d.specialty ? ` · ${d.specialty}` : ''}
+                </option>
+              ))}
+            </select>
             <input
               type="text"
               value={subject}
@@ -78,9 +117,10 @@ export function MessagesPage() {
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-sky-600 px-3 py-1.5 font-medium text-white shadow-sm hover:bg-sky-700 dark:bg-sky-700 dark:hover:bg-sky-600"
+              disabled={submitting}
+              className="rounded-xl bg-sky-600 px-3 py-1.5 font-medium text-white shadow-sm hover:bg-sky-700 disabled:opacity-50 dark:bg-sky-700 dark:hover:bg-sky-600"
             >
-              {t('portal:messages.sendButton')}
+              {submitting ? 'Sending…' : t('portal:messages.sendButton')}
             </button>
           </div>
         </form>

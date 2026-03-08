@@ -7,6 +7,7 @@ import { AuthLayout } from './layouts/AuthLayout'
 import { PortalLayout } from './layouts/PortalLayout'
 import { DoctorLayout } from './layouts/DoctorLayout'
 import { AdminLayout } from './layouts/AdminLayout'
+import { PersonnelLayout } from './layouts/PersonnelLayout'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { SignupPage } from './pages/auth/SignupPage'
@@ -19,13 +20,21 @@ import { VisitSummaryPage } from './pages/VisitSummaryPage'
 import { AccountSettingsPage } from './pages/AccountSettingsPage'
 import { SiteSettingsPage } from './pages/SiteSettingsPage'
 import { DoctorDashboardPage } from './pages/DoctorDashboardPage'
+import { DoctorCalendarPage } from './pages/DoctorCalendarPage'
+import { DoctorPatientsPage } from './pages/DoctorPatientsPage'
+import { DoctorMessagesPage } from './pages/DoctorMessagesPage'
+import { PatientChartPage } from './pages/PatientChartPage'
 import { AdminDashboardPage } from './pages/AdminDashboardPage'
+import { PersonnelManagementPage } from './pages/PersonnelManagementPage'
+import { PersonnelDashboardPage } from './pages/PersonnelDashboardPage'
+import { PersonnelTasksPage } from './pages/PersonnelTasksPage'
+import { PersonnelMessagesPage } from './pages/PersonnelMessagesPage'
+import type { UserRole } from './api/types'
 
-type Role = 'patient' | 'doctor' | 'admin'
-
-function roleHomePath(role: Role) {
+function roleHomePath(role: UserRole) {
   if (role === 'doctor') return '/doctor'
   if (role === 'admin') return '/admin'
+  if (role === 'personnel') return '/staff'
   return '/portal'
 }
 
@@ -34,7 +43,7 @@ function ProtectedRoute({
   roles,
 }: {
   children: ReactElement
-  roles?: Role[]
+  roles?: UserRole[]
 }) {
   const { isAuthenticated, user } = useAuth()
 
@@ -42,8 +51,8 @@ function ProtectedRoute({
     return <Navigate to="/login" replace />
   }
 
-  if (roles && user && !roles.includes(user.role)) {
-    return <Navigate to={roleHomePath(user.role)} replace />
+  if (roles && user && !roles.includes(user.role as UserRole)) {
+    return <Navigate to={roleHomePath(user.role as UserRole)} replace />
   }
 
   return children
@@ -73,17 +82,18 @@ function App() {
           <Route
             path="/login"
             element={
-              isAuthenticated ? <Navigate to={roleHomePath(user!.role)} replace /> : <LoginPage />
+              isAuthenticated ? <Navigate to={roleHomePath(user!.role as UserRole)} replace /> : <LoginPage />
             }
           />
           <Route
             path="/signup"
             element={
-              isAuthenticated ? <Navigate to={roleHomePath(user!.role)} replace /> : <SignupPage />
+              isAuthenticated ? <Navigate to={roleHomePath(user!.role as UserRole)} replace /> : <SignupPage />
             }
           />
         </Route>
 
+        {/* ── Patient portal ── */}
         <Route
           element={
             <ProtectedRoute roles={['patient']}>
@@ -100,6 +110,7 @@ function App() {
           <Route path="/portal/settings" element={<AccountSettingsPage />} />
         </Route>
 
+        {/* ── Doctor portal ── */}
         <Route
           element={
             <ProtectedRoute roles={['doctor']}>
@@ -108,9 +119,28 @@ function App() {
           }
         >
           <Route path="/doctor" element={<DoctorDashboardPage />} />
+          <Route path="/doctor/calendar" element={<DoctorCalendarPage />} />
+          <Route path="/doctor/patients" element={<DoctorPatientsPage />} />
+          <Route path="/doctor/patients/:patientId/chart" element={<PatientChartPage />} />
+          <Route path="/doctor/messages" element={<DoctorMessagesPage />} />
           <Route path="/doctor/settings" element={<AccountSettingsPage />} />
         </Route>
 
+        {/* ── Healthcare personnel portal ── */}
+        <Route
+          element={
+            <ProtectedRoute roles={['personnel']}>
+              <PersonnelLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/staff" element={<PersonnelDashboardPage />} />
+          <Route path="/staff/tasks" element={<PersonnelTasksPage />} />
+          <Route path="/staff/messages" element={<PersonnelMessagesPage />} />
+          <Route path="/staff/settings" element={<AccountSettingsPage />} />
+        </Route>
+
+        {/* ── Admin portal ── */}
         <Route
           element={
             <ProtectedRoute roles={['admin']}>
@@ -119,13 +149,14 @@ function App() {
           }
         >
           <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/personnel" element={<PersonnelManagementPage />} />
           <Route path="/admin/site-settings" element={<SiteSettingsPage />} />
           <Route path="/admin/settings" element={<AccountSettingsPage />} />
         </Route>
 
         <Route
           path="*"
-          element={<Navigate to={isAuthenticated && user ? roleHomePath(user.role) : '/'} replace />}
+          element={<Navigate to={isAuthenticated && user ? roleHomePath(user.role as UserRole) : '/'} replace />}
         />
       </Routes>
     </>
