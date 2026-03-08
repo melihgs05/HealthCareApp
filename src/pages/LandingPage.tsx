@@ -17,7 +17,7 @@ function SlideText({ title, subtitle }: { title: string; subtitle: string }) {
         {subtitle}
       </p>
     </>
-  )
+  ) 
 }
 
 function HeroCarousel() {
@@ -250,7 +250,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* CTA strip */}
+      {/* CTA strip  */}
       <section className="bg-sky-600 py-16">
         <div className="mx-auto max-w-3xl px-4 text-center lg:px-8">
           <h2 className="text-2xl font-bold text-white sm:text-3xl">
