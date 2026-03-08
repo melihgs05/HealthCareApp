@@ -1,0 +1,37 @@
+{
+  "layout": {
+    "appTitle": "CareBridge Admin",
+    "appSubtitle": "Sistem kontrolü",
+    "headerLabel": "Yönetici konsolu",
+    "headerSubtitle": "Hastalar, klinisyenler ve portal aktivitesini tek yerden izleyin.",
+    "adminAccount": "Yönetici hesabı"
+  },
+  "nav": {
+    "overview": "Genel Bakış",
+    "users": "Kullanıcılar",
+    "reports": "Raporlar",
+    "settings": "Ayarlar"
+  },
+  "dashboard": {
+    "activePatients": "Aktif hastalar",
+    "activeClinicians": "Aktif klinisyenler",
+    "appointmentsWeek": "Bu haftaki randevular",
+    "messages24h": "Son 24 saatteki mesajlar",
+    "systemActivityTitle": "Sistem aktivitesi",
+    "integrationsTitle": "Veri & entegrasyonlar",
+    "integrationsDesc": "Tam uygulamada bu panel Node + Mongo arka ucunuza ve bağlı herhangi bir EHR'ye bağlanacak; senkronizasyon durumunu, son çalışmaları ve veri kalitesi uyarılarını gösterecektir.",
+    "userManagementTitle": "Kullanıcı yönetimi",
+    "userSearchPlaceholder": "Kullanıcı ara...",
+    "userNameCol": "Ad",
+    "userRoleCol": "Rol",
+    "userStatusCol": "Durum",
+    "userLastLoginCol": "Son giriş",
+    "integrationApi": "API Gateway",
+    "integrationDb": "Veritabanı",
+    "integrationEhr": "EHR Sistemi",
+    "integrationCms": "CMS",
+    "statusOnline": "Çevrimiçi",
+    "statusOffline": "Çevrimdışı",
+    "statusDegraded": "Kısmi Kesinti"
+  }
+}

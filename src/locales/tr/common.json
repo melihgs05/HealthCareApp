@@ -1,0 +1,78 @@
+{
+  "appName": "CareBridge",
+  "tagline": "Sağlığınız, sizin yolunuzla.",
+  "nav": {
+    "home": "Ana Sayfa",
+    "about": "Hakkımızda",
+    "contacts": "İletişim",
+    "account": "Hesap"
+  },
+  "actions": {
+    "signIn": "Giriş Yap",
+    "signOut": "Çıkış Yap",
+    "getStarted": "Başlayın",
+    "learnMore": "Daha Fazla",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "close": "Kapat",
+    "submit": "Gönder",
+    "download": "İndir",
+    "send": "Gönder",
+    "back": "Geri",
+    "backToHome": "Ana sayfaya dön"
+  },
+  "status": {
+    "upcoming": "Yaklaşan",
+    "completed": "Tamamlandı",
+    "cancelled": "İptal Edildi",
+    "normal": "Normal",
+    "followUp": "Takip Gerekli",
+    "inProgress": "Devam Ediyor",
+    "active": "Aktif",
+    "inactive": "Pasif",
+    "new": "Yeni"
+  },
+  "theme": {
+    "light": "Açık mod",
+    "dark": "Koyu mod",
+    "toggle": "Temayı değiştir"
+  },
+  "language": {
+    "en": "English",
+    "tr": "Türkçe",
+    "select": "Dil"
+  },
+  "notifications": {
+    "title": "Bildirimler",
+    "markAllRead": "Tümünü okundu işaretle",
+    "noNotifications": "Yeni bildirim yok",
+    "unread": "okunmamış"
+  },
+  "about": {
+    "title": "CareBridge Hakkında",
+    "subtitle": "Hastaları sağlık hizmetleriyle buluşturuyoruz",
+    "description": "CareBridge, hastaların sağlık bilgilerini, randevularını ve sağlık ekipleriyle iletişimlerini tek bir güvenli platformda yönetmelerine olanak tanıyan modern bir hasta portalıdır.",
+    "feature1Title": "7/24 Erişim",
+    "feature1Desc": "Sağlık bilgilerinize istediğiniz zaman, istediğiniz cihazdan ulaşın.",
+    "feature2Title": "Güvenli Tasarım",
+    "feature2Desc": "Verilerinizi korumak için HIPAA uyumlu güvenlik uygulamalarıyla geliştirilmiştir.",
+    "feature3Title": "Bakım Koordinasyonu",
+    "feature3Desc": "Tüm sağlık ekibinizle tek bir yerde bağlantıda kalın."
+  },
+  "contacts": {
+    "title": "Bize Ulaşın",
+    "phone": "(555) 123-4567",
+    "email": "destek@carebridge.health",
+    "address": "Sağlık Caddesi 123, Tıp Bölgesi, İstanbul",
+    "hours": "Pazartesi – Cuma, 08:00 – 18:00"
+  },
+  "footer": {
+    "rights": "Tüm hakları saklıdır.",
+    "privacy": "Gizlilik Politikası",
+    "terms": "Kullanım Şartları"
+  },
+  "errors": {
+    "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+    "required": "Bu alan zorunludur."
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "layout": {
+    "appTitle": "CareBridge Admin",
+    "appSubtitle": "System control",
+    "headerLabel": "Admin console",
+    "headerSubtitle": "Monitor patients, clinicians, and portal activity in one place.",
+    "adminAccount": "Admin account"
+  },
+  "nav": {
+    "overview": "Overview",
+    "users": "Users",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "activePatients": "Active patients",
+    "activeClinicians": "Active clinicians",
+    "appointmentsWeek": "Appointments this week",
+    "messages24h": "Messages in last 24h",
+    "systemActivityTitle": "System activity",
+    "integrationsTitle": "Data & integrations",
+    "integrationsDesc": "In the full implementation this panel will connect to your Node + Mongo backend and any connected EHR, showing sync status, last runs, and any data quality alerts.",
+    "userManagementTitle": "User management",
+    "userSearchPlaceholder": "Search users...",
+    "userNameCol": "Name",
+    "userRoleCol": "Role",
+    "userStatusCol": "Status",
+    "userLastLoginCol": "Last login",
+    "integrationApi": "API Gateway",
+    "integrationDb": "Database",
+    "integrationEhr": "EHR System",
+    "integrationCms": "CMS",
+    "statusOnline": "Online",
+    "statusOffline": "Offline",
+    "statusDegraded": "Degraded"
+  }
+}

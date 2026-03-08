@@ -1,0 +1,78 @@
+{
+  "appName": "CareBridge",
+  "tagline": "Your health, your way.",
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "contacts": "Contacts",
+    "account": "Account"
+  },
+  "actions": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "submit": "Submit",
+    "download": "Download",
+    "send": "Send",
+    "back": "Back",
+    "backToHome": "Back to home"
+  },
+  "status": {
+    "upcoming": "Upcoming",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "normal": "Normal",
+    "followUp": "Follow up",
+    "inProgress": "In progress",
+    "active": "Active",
+    "inactive": "Inactive",
+    "new": "New"
+  },
+  "theme": {
+    "light": "Light mode",
+    "dark": "Dark mode",
+    "toggle": "Toggle theme"
+  },
+  "language": {
+    "en": "English",
+    "tr": "Türkçe",
+    "select": "Language"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "noNotifications": "No new notifications",
+    "unread": "unread"
+  },
+  "about": {
+    "title": "About CareBridge",
+    "subtitle": "Connecting patients with their healthcare",
+    "description": "CareBridge is a modern healthcare patient portal that empowers patients to manage their health information, appointments, and communications with their care team — all in one secure place.",
+    "feature1Title": "24/7 Access",
+    "feature1Desc": "View your health information anytime, on any device.",
+    "feature2Title": "Secure by Design",
+    "feature2Desc": "Built with HIPAA-aligned security practices to protect your data.",
+    "feature3Title": "Care Coordination",
+    "feature3Desc": "Stay connected with your entire healthcare team in one place."
+  },
+  "contacts": {
+    "title": "Contact Us",
+    "phone": "(555) 123-4567",
+    "email": "support@carebridge.health",
+    "address": "123 Health Way, Medical District, NY 10001",
+    "hours": "Monday – Friday, 8:00 AM – 6:00 PM"
+  },
+  "footer": {
+    "rights": "All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "required": "This field is required."
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "layout": {
+    "appTitle": "CareBridge Clinician",
+    "appSubtitle": "Doctor view",
+    "headerLabel": "Clinician workspace",
+    "headerSubtitle": "Quickly review today's schedule and patient updates.",
+    "doctorAccount": "Doctor account"
+  },
+  "nav": {
+    "today": "Today",
+    "patients": "Patients",
+    "schedule": "Schedule",
+    "messages": "Messages",
+    "results": "Results"
+  },
+  "dashboard": {
+    "patientsToday": "Patients today",
+    "patientsTodayHint": "{{new}} new, {{returning}} returning",
+    "newMessages": "New messages",
+    "newMessagesHint": "Needs review before end of day",
+    "resultsToSign": "Results to sign",
+    "resultsToSignHint": "Lab results waiting for review",
+    "scheduleTitle": "Today's schedule",
+    "scheduleSubtitle": "A quick view of your next visits.",
+    "openChart": "Open chart",
+    "patientListTitle": "Patient list",
+    "patientListSearch": "Search patients...",
+    "patientNameCol": "Patient",
+    "mrnCol": "MRN",
+    "lastVisitCol": "Last visit",
+    "nextApptCol": "Next appointment",
+    "statusCol": "Status",
+    "inboxTitle": "Message inbox",
+    "inboxSubtitle": "Recent unread messages from patients.",
+    "updatesTitle": "Recent patient updates",
+    "quickActionsTitle": "Quick actions",
+    "addNote": "Add note",
+    "ePrescribe": "E-prescribe",
+    "orderLab": "Order lab",
+    "viewAll": "View all"
+  }
+}

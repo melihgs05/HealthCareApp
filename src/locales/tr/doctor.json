@@ -1,0 +1,42 @@
+{
+  "layout": {
+    "appTitle": "CareBridge Klinisyen",
+    "appSubtitle": "Doktor görünümü",
+    "headerLabel": "Klinisyen çalışma alanı",
+    "headerSubtitle": "Bugünkü programı ve hasta güncellemelerini hızlıca inceleyin.",
+    "doctorAccount": "Doktor hesabı"
+  },
+  "nav": {
+    "today": "Bugün",
+    "patients": "Hastalar",
+    "schedule": "Program",
+    "messages": "Mesajlar",
+    "results": "Sonuçlar"
+  },
+  "dashboard": {
+    "patientsToday": "Bugünkü hastalar",
+    "patientsTodayHint": "{{new}} yeni, {{returning}} tekrar eden",
+    "newMessages": "Yeni mesajlar",
+    "newMessagesHint": "Gün sonu öncesi incelenmesi gerekiyor",
+    "resultsToSign": "İmzalanacak sonuçlar",
+    "resultsToSignHint": "İnceleme bekleyen lab sonuçları",
+    "scheduleTitle": "Bugünkü program",
+    "scheduleSubtitle": "Sonraki ziyaretlerinize hızlı bakış.",
+    "openChart": "Grafik aç",
+    "patientListTitle": "Hasta listesi",
+    "patientListSearch": "Hasta ara...",
+    "patientNameCol": "Hasta",
+    "mrnCol": "TKN",
+    "lastVisitCol": "Son ziyaret",
+    "nextApptCol": "Sonraki randevu",
+    "statusCol": "Durum",
+    "inboxTitle": "Mesaj gelen kutusu",
+    "inboxSubtitle": "Hastalardan gelen son okunmamış mesajlar.",
+    "updatesTitle": "Son hasta güncellemeleri",
+    "quickActionsTitle": "Hızlı işlemler",
+    "addNote": "Not ekle",
+    "ePrescribe": "E-reçete",
+    "orderLab": "Lab iste",
+    "viewAll": "Tümünü görüntüle"
+  }
+}
