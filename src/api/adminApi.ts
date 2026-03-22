@@ -248,7 +248,7 @@ export async function getSystemSetting(key: string): Promise<string | null> {
   if (isNeonConfigured) {
     const sql = getNeonSql()
     const rows = await sql`SELECT value FROM system_settings WHERE key = ${key} LIMIT 1`
-    return rows[0]?.value ?? null
+    return (rows[0]?.value as string | null | undefined) ?? null
   }
   const { data } = await supabase.from('system_settings').select('value').eq('key', key).single()
   return data?.value ?? null

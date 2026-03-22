@@ -22,13 +22,28 @@ export const isNeonConfigured: boolean = Boolean(
   _url && _url.startsWith('postgresql://'),
 )
 
+/** Every row returned by the Neon SQL tag is a plain object. */
+export type NeonRow = Record<string, unknown>
+
+/**
+ * A typed alias for the Neon tagged-template function whose result is
+ * always `NeonRow[]`.  The raw `ReturnType<typeof neon>` exposes a
+ * `FullQueryResults<boolean>` overload that TypeScript's strict mode
+ * rejects for `.map()` / `[0]` / `.length` calls, so we narrow it here
+ * once instead of casting at every callsite.
+ */
+export type TypedSql = (
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+) => Promise<NeonRow[]>
+
 let _sql: ReturnType<typeof neon> | null = null
 
 /**
  * Returns the cached Neon SQL tag function.
  * Throws a clear error if VITE_NEON_DATABASE_URL is not set.
  */
-export function getNeonSql(): ReturnType<typeof neon> {
+export function getNeonSql(): TypedSql {
   if (!isNeonConfigured || !_url) {
     throw new Error(
       '[Neon] VITE_NEON_DATABASE_URL is not configured. ' +
@@ -38,5 +53,5 @@ export function getNeonSql(): ReturnType<typeof neon> {
   if (!_sql) {
     _sql = neon(_url)
   }
-  return _sql
+  return _sql as unknown as TypedSql
 }
