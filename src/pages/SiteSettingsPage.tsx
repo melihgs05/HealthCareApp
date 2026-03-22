@@ -70,13 +70,17 @@ export function SiteSettingsPage() {
   const set = (key: keyof SiteSettings) => (value: string) =>
     setLocal((prev) => ({ ...prev, [key]: value }))
 
+  const setLogoUrl = (value: string) => {
+    setLocal((prev) => ({ ...prev, logoUrl: value }))
+    updateSettings({ logoUrl: value })
+  }
+
   const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
     reader.onload = (ev) => {
-      const dataUrl = ev.target?.result as string
-      setLocal((prev) => ({ ...prev, logoUrl: dataUrl }))
+      setLogoUrl(ev.target?.result as string)
     }
     reader.readAsDataURL(file)
   }
@@ -164,7 +168,7 @@ export function SiteSettingsPage() {
                     />
                     <button
                       type="button"
-                      onClick={() => setLocal((prev) => ({ ...prev, logoUrl: '' }))}
+                      onClick={() => setLogoUrl('')}
                       className="rounded-xl border border-rose-200 bg-white px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:border-rose-800/50 dark:bg-slate-800 dark:text-rose-400"
                     >
                       {t('siteSettings.branding.logoRemove')}
@@ -174,7 +178,7 @@ export function SiteSettingsPage() {
                 <Field
                   label={t('siteSettings.branding.logoUrlLabel')}
                   value={local.logoUrl}
-                  onChange={set('logoUrl')}
+                  onChange={setLogoUrl}
                   placeholder={t('siteSettings.branding.logoUrlPlaceholder')}
                 />
                 <input

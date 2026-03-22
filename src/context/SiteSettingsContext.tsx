@@ -3,6 +3,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -153,6 +154,16 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
     }
     setSettings({ ...DEFAULT_SITE_SETTINGS })
   }, [])
+
+  useEffect(() => {
+    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+    if (!link) return
+    if (settings.logoUrl) {
+      link.href = settings.logoUrl
+    } else {
+      link.href = '/vite.svg'
+    }
+  }, [settings.logoUrl])
 
   const value = useMemo<SiteSettingsContextValue>(
     () => ({ settings, updateSettings, resetSettings }),

@@ -337,12 +337,20 @@ export function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 lg:px-8">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-sky-600 text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
-                  <path d="M12 8v8M8 12h8" />
-                </svg>
-              </div>
+              {settings.logoUrl ? (
+                <img
+                  src={settings.logoUrl}
+                  alt={settings.appName}
+                  className="h-7 max-w-[100px] object-contain"
+                />
+              ) : (
+                <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-sky-600 text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
+                    <path d="M12 8v8M8 12h8" />
+                  </svg>
+                </div>
+              )}
               <span className="text-sm font-semibold text-slate-900 dark:text-white">
                 {settings.appName}
               </span>
