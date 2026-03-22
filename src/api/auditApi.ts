@@ -11,6 +11,7 @@
  */
 
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { isNeonConfigured, getNeonSql } from '../lib/neonClient'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -79,7 +80,17 @@ export function logPHIAccess(
 
   push(full)
 
-  if (isSupabaseConfigured) {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    void sql`
+      INSERT INTO audit_logs
+        (user_id, user_name, user_role, action, resource_type, resource_id, patient_id, patient_name, device)
+      VALUES
+        (${full.userId}, ${full.userName}, ${full.userRole}, ${full.action},
+         ${full.resourceType}, ${full.resourceId ?? null}, ${full.patientId ?? null},
+         ${full.patientName ?? null}, ${full.device ?? null})
+    `
+  } else if (isSupabaseConfigured) {
     void supabase.from('audit_logs').insert({
       user_id: full.userId,
       user_name: full.userName,
@@ -100,6 +111,31 @@ export function logPHIAccess(
  * With Supabase returns the latest 200 rows.
  */
 export async function fetchAuditLog(): Promise<AuditLogEntry[]> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      SELECT id, created_at, user_id, user_name, user_role, action,
+             resource_type, resource_id, patient_id, patient_name, device
+      FROM audit_logs
+      ORDER BY created_at DESC
+      LIMIT 200
+    `
+    if (!rows.length) return [...memoryLog]
+    return rows.map((row) => ({
+      id: row.id as string,
+      timestamp: row.created_at as string,
+      userId: row.user_id as string,
+      userName: row.user_name as string,
+      userRole: row.user_role as string,
+      action: row.action as AuditAction,
+      resourceType: row.resource_type as AuditLogEntry['resourceType'],
+      resourceId: row.resource_id as string | undefined,
+      patientId: row.patient_id as string | undefined,
+      patientName: row.patient_name as string | undefined,
+      device: row.device as string | undefined,
+    }))
+  }
+
   if (!isSupabaseConfigured) return [...memoryLog]
 
   const { data, error } = await supabase

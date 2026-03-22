@@ -6,12 +6,10 @@ import {
   updateUserRole,
   fetchPersonnelPermissions,
   setPersonnelPermission,
-  getSystemSetting,
-  setSystemSetting,
 } from '../api/adminApi'
 import type { PersonnelPermissionDTO, PersonnelSubrole, AdminUserDTO } from '../api/types'
 import { useAuth } from '../context/AuthContext'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useDatabaseMode } from '../context/DatabaseModeContext'
 
 type PersonnelUser = {
   id: string
@@ -43,17 +41,17 @@ const SUBROLES: PersonnelSubrole[] = ['lab', 'nurse', 'desk']
 
 export function PersonnelManagementPage() {
   const { user: currentUser } = useAuth()
+  const { isDemoMode, isDbConfigured, setDemoMode } = useDatabaseMode()
   const [personnel, setPersonnel] = useState<PersonnelUser[]>([])
   const [selectedSubrole, setSelectedSubrole] = useState<PersonnelSubrole>('lab')
   const [permissions, setPermissions] = useState<PersonnelPermissionDTO[]>([])
-  const [demoMode, setDemoMode] = useState(false)
   const [loadingPerms, setLoadingPerms] = useState(false)
   const [savingPerm, setSavingPerm] = useState<string | null>(null)
   const [updatingRole, setUpdatingRole] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
+    if (!isDbConfigured || isDemoMode) {
       setPersonnel(DEMO_PERSONNEL)
       // Demo default permissions
       setPermissions([
@@ -75,12 +73,8 @@ export function PersonnelManagementPage() {
         const result = await fetchUsers(1, 100, undefined)
         const staffOnly = result.data.filter((u: AdminUserDTO) => u.role === 'personnel')
         setPersonnel(staffOnly as unknown as PersonnelUser[])
-        const [perms, dm] = await Promise.all([
-          fetchPersonnelPermissions(),
-          getSystemSetting('demo_mode'),
-        ])
+        const perms = await fetchPersonnelPermissions()
         setPermissions(perms)
-        setDemoMode(dm === 'true')
       } catch (err) {
         toast.error('Failed to load personnel data')
         console.error(err)
@@ -89,17 +83,18 @@ export function PersonnelManagementPage() {
       }
     }
     void load()
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDbConfigured, isDemoMode])
 
   // Load permissions when subrole tab changes
   useEffect(() => {
-    if (!isSupabaseConfigured) return
+    if (!isDbConfigured || isDemoMode) return
     setLoadingPerms(true)
     fetchPersonnelPermissions(selectedSubrole)
       .then(setPermissions)
       .catch(console.error)
       .finally(() => setLoadingPerms(false))
-  }, [selectedSubrole])
+  }, [selectedSubrole, isDbConfigured, isDemoMode])
 
   const getPermission = (subrole: PersonnelSubrole, perm: string) =>
     permissions.find((p) => p.subrole === subrole && p.permission === perm)?.granted ?? false
@@ -109,7 +104,7 @@ export function PersonnelManagementPage() {
     setSavingPerm(key)
     try {
       const newVal = !current
-      if (isSupabaseConfigured) {
+      if (isDbConfigured && !isDemoMode) {
         await setPersonnelPermission(selectedSubrole, perm, newVal, currentUser!.id)
       }
       setPermissions((prev) => {
@@ -128,7 +123,7 @@ export function PersonnelManagementPage() {
   const handleChangeSubrole = async (userId: string, newSubrole: PersonnelSubrole) => {
     setUpdatingRole(userId)
     try {
-      if (isSupabaseConfigured) await updateUserRole(userId, 'personnel', newSubrole)
+      if (isDbConfigured && !isDemoMode) await updateUserRole(userId, 'personnel', newSubrole)
       setPersonnel((prev) => prev.map((u) => u.id === userId ? { ...u, subrole: newSubrole } : u))
       toast.success('Subrole updated')
     } catch {
@@ -139,11 +134,9 @@ export function PersonnelManagementPage() {
   }
 
   const handleDemoToggle = async () => {
-    const newVal = !demoMode
     try {
-      if (isSupabaseConfigured) await setSystemSetting('demo_mode', String(newVal))
-      setDemoMode(newVal)
-      toast.success(`Demo mode ${newVal ? 'enabled' : 'disabled'}`)
+      await setDemoMode(!isDemoMode)
+      toast.success(`Demo mode ${!isDemoMode ? 'enabled' : 'disabled'}`)
     } catch {
       toast.error('Failed to update demo mode')
     }
@@ -161,17 +154,30 @@ export function PersonnelManagementPage() {
       <div className={cardCls + ' flex items-center justify-between'}>
         <div>
           <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Demo Mode</p>
-          <p className="mt-0.5 text-xs text-slate-500">When enabled, the app shows simulated data to all users.</p>
+          <p className="mt-0.5 text-xs text-slate-500">
+            {isDbConfigured
+              ? 'Toggle between live data and simulated demo data.'
+              : 'No database configured — app will always show demo data.'}
+          </p>
+          {!isDbConfigured && (
+            <p className="mt-1 text-[0.65rem] text-amber-600 dark:text-amber-400">
+              Set VITE_NEON_DATABASE_URL or VITE_SUPABASE_URL in .env to enable live mode.
+            </p>
+          )}
         </div>
         <button
           type="button"
+          disabled={!isDbConfigured}
           onClick={() => void handleDemoToggle()}
+          title={!isDbConfigured ? 'Configure a database to toggle demo mode' : undefined}
           className={[
             'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
-            demoMode ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600',
+            !isDbConfigured
+              ? 'cursor-not-allowed opacity-50 bg-slate-300 dark:bg-slate-600'
+              : isDemoMode ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600',
           ].join(' ')}
         >
-          <span className={['inline-block h-4 w-4 rounded-full bg-white shadow transition-transform', demoMode ? 'translate-x-6' : 'translate-x-1'].join(' ')} />
+          <span className={['inline-block h-4 w-4 rounded-full bg-white shadow transition-transform', isDemoMode ? 'translate-x-6' : 'translate-x-1'].join(' ')} />
         </button>
       </div>
 

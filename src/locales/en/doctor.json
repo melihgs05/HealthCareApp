@@ -8,6 +8,7 @@
   },
   "nav": {
     "today": "Today",
+    "calendar": "Calendar",
     "patients": "Patients",
     "schedule": "Schedule",
     "messages": "Messages",

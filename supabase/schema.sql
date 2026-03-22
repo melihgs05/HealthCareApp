@@ -481,3 +481,51 @@ create index if not exists idx_tasks_assigned_to    on personnel_tasks(assigned_
 create index if not exists idx_patient_notes        on patient_notes(patient_id, created_at);
 create index if not exists idx_prescriptions_patient on prescriptions(patient_id);
 create index if not exists idx_test_results_patient on test_results(patient_id, date);
+
+-- ──────────────────────────────────────────────────────────────
+-- EMAIL VERIFICATION TOKENS
+-- Run this migration after the initial schema if upgrading.
+-- ──────────────────────────────────────────────────────────────
+alter table  profiles add column if not exists email_verified boolean not null default false;
+
+create table if not exists email_verification_tokens (
+  id         uuid        primary key default gen_random_uuid(),
+  user_id    uuid        not null references profiles(id) on delete cascade,
+  token      text        not null unique,
+  expires_at timestamptz not null,
+  used_at    timestamptz,
+  created_at timestamptz default now()
+);
+
+-- Only the owning user (or service role) should access these
+alter table email_verification_tokens enable row level security;
+create policy "Service role only for email_verification_tokens"
+  on email_verification_tokens using (false);
+
+create index if not exists idx_email_verification_token on email_verification_tokens(token);
+
+-- ──────────────────────────────────────────────────────────────
+-- PASSWORD RESET TOKENS
+-- ──────────────────────────────────────────────────────────────
+create table if not exists password_reset_tokens (
+  id         uuid        primary key default gen_random_uuid(),
+  user_id    uuid        not null references profiles(id) on delete cascade,
+  token      text        not null unique,
+  expires_at timestamptz not null,
+  used_at    timestamptz,
+  created_at timestamptz default now()
+);
+
+alter table password_reset_tokens enable row level security;
+create policy "Service role only for password_reset_tokens"
+  on password_reset_tokens using (false);
+
+create index if not exists idx_password_reset_token on password_reset_tokens(token);
+
+-- ──────────────────────────────────────────────────────────────
+-- GOOGLE OAUTH SUPPORT
+-- Adds a google_id column to profiles for Google sign-in linking.
+-- Run this migration once in Neon SQL Editor.
+-- ──────────────────────────────────────────────────────────────
+alter table profiles add column if not exists google_id text unique;
+create index if not exists idx_profiles_google_id on profiles(google_id);

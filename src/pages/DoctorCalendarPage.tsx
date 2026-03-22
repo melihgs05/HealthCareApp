@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
-import { Badge } from '../components/ui'
+import { Badge, Select } from '../components/ui'
 import {
   fetchDoctorScheduleByDate,
   fetchDoctorAvailability,
@@ -12,7 +12,7 @@ import {
   deleteBlockedTime,
 } from '../api/doctorApi'
 import type { DoctorScheduleDTO, DoctorAvailabilityDTO, BlockedTimeDTO } from '../api/types'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useDatabaseMode } from '../context/DatabaseModeContext'
 
 // ─── Demo fallback data ───────────────────────────────────────────
 const DEMO_AVAILABILITY: DoctorAvailabilityDTO[] = [
@@ -65,10 +65,11 @@ export function DoctorCalendarPage() {
   const [savingBl, setSavingBl] = useState(false)
 
   const doctorId = user?.id ?? 'demo-doctor-001'
+  const { isDemoMode } = useDatabaseMode()
 
   // Load availability + blocked when month changes
   useEffect(() => {
-    if (!isSupabaseConfigured) {
+    if (isDemoMode) {
       setAvailability(DEMO_AVAILABILITY)
       setBlocked(DEMO_BLOCKED)
       return
@@ -82,14 +83,14 @@ export function DoctorCalendarPage() {
       setAvailability(av)
       setBlocked(bl)
     }).catch(console.error)
-  }, [doctorId, viewYear, viewMonth])
+  }, [doctorId, viewYear, viewMonth, isDemoMode])
 
   // Load day appointments when date is selected
   useEffect(() => {
     if (!selectedDate) { setDayAppts([]); return }
     const dateStr = toDateStr(selectedDate)
     setLoadingDay(true)
-    if (!isSupabaseConfigured) {
+    if (isDemoMode) {
       setDayAppts([])
       setLoadingDay(false)
       return
@@ -98,7 +99,7 @@ export function DoctorCalendarPage() {
       .then(setDayAppts)
       .catch(console.error)
       .finally(() => setLoadingDay(false))
-  }, [doctorId, selectedDate])
+  }, [doctorId, selectedDate, isDemoMode])
 
   function toDateStr(d: Date) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -116,7 +117,7 @@ export function DoctorCalendarPage() {
     e.preventDefault()
     setSavingAv(true)
     try {
-      if (isSupabaseConfigured) {
+      if (!isDemoMode) {
         await upsertAvailability(doctorId, { dayOfWeek: avDay, startTime: avStart, endTime: avEnd, slotDurationMinutes: avSlot })
         setAvailability((prev) => [...prev, { id: `av-${Date.now()}`, dayOfWeek: avDay, startTime: avStart, endTime: avEnd, slotDurationMinutes: avSlot }])
       } else {
@@ -132,7 +133,7 @@ export function DoctorCalendarPage() {
 
   const handleDeleteAvailability = async (id: string) => {
     try {
-      if (isSupabaseConfigured) await deleteAvailability(id)
+      if (!isDemoMode) await deleteAvailability(id)
       setAvailability((prev) => prev.filter((a) => a.id !== id))
       toast.success('Slot removed')
     } catch {
@@ -147,7 +148,7 @@ export function DoctorCalendarPage() {
     setSavingBl(true)
     try {
       const entry = { date: toDateStr(selectedDate), startTime: blStart, endTime: blEnd, reason: blReason }
-      if (isSupabaseConfigured) {
+      if (!isDemoMode) {
         await addBlockedTime(doctorId, entry)
         setBlocked((prev) => [...prev, { id: `bl-${Date.now()}`, ...entry }])
       } else {
@@ -164,7 +165,7 @@ export function DoctorCalendarPage() {
 
   const handleDeleteBlocked = async (id: string) => {
     try {
-      if (isSupabaseConfigured) await deleteBlockedTime(id)
+      if (!isDemoMode) await deleteBlockedTime(id)
       setBlocked((prev) => prev.filter((b) => b.id !== id))
       toast.success('Block removed')
     } catch {
@@ -312,9 +313,13 @@ export function DoctorCalendarPage() {
         <form onSubmit={(e) => void handleAddAvailability(e)} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 mb-4">
           <div>
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Day</label>
-            <select value={avDay} onChange={(e) => setAvDay(Number(e.target.value))} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-1.5 text-xs focus:border-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100">
-              {FULL_DAY_NAMES.map((d, i) => <option key={i} value={i}>{d}</option>)}
-            </select>
+            <Select
+              accent="emerald"
+              value={String(avDay)}
+              onChange={(val) => setAvDay(Number(val))}
+              options={FULL_DAY_NAMES.map((d, i) => ({ value: String(i), label: d }))}
+              className="mt-1"
+            />
           </div>
           <div>
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Start</label>

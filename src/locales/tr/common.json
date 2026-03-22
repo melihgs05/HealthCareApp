@@ -97,5 +97,28 @@
   "errors": {
     "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
     "required": "Bu alan zorunludur."
+  },
+  "hipaa": {
+    "notice": {
+      "ariaLabel": "HIPAA Uyum Bildirimi",
+      "title": "HIPAA Uyum Bildirimi",
+      "subtitle": "Korunan sağlık bilgilerine erişimden önce gereklidir",
+      "bodyStart": "Erişmek üzeresiniz:",
+      "bodyPhi": "Korunan Sağlık Bilgisi (PHI)",
+      "bodyEnd": "Bu bilgiler, Sağlık Sigortası Taşınabilirlik ve Sorumluluk Yasası (HIPAA) kapsamında yönetilmektedir.",
+      "rule1": "Yalnızca mevcut göreviniz için gereken minimum bilgiye erişin.",
+      "rule2": "PHI'yi yetkisiz kişilerle paylaşmayın, kopyalamayın veya ifşa etmeyin.",
+      "rule3": "Gerçekleştirdiğiniz tüm işlemler HIPAA uyumlu denetim günlüğüne kaydedilir.",
+      "rule4": "Oturumunuz 15 dakika hareketsizlikten sonra otomatik olarak sona erecektir.",
+      "rule5": "Şüpheli ihlalleri derhal uyum sorumlusuna bildirin.",
+      "disclaimer": "PHI'ye yetkisiz erişim veya ifşa, hukuki ve cezai yaptırımlara tabi federal bir ihlaldir.",
+      "ctaButton": "PHI'yi sorumlu bir şekilde kullanacağımı kabul ediyorum"
+    },
+    "idleWarning": {
+      "title": "Oturum Sona Eriyor",
+      "subtitle": "HIPAA otomatik oturum kapatma politikası",
+      "body": "Hareketsizsiniz. Hasta sağlık bilgilerini korumak için oturumunuz {{time}} içinde otomatik olarak sona erecektir.",
+      "ctaButton": "Hâlâ buradayım — oturumu açık tut"
+    }
   }
 }

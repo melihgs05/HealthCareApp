@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
-import { Badge } from '../components/ui'
+import { Badge, Select } from '../components/ui'
 import { logPHIAccess } from '../api/auditApi'
 import { decodePhiId } from '../utils/hipaa'
 import {
@@ -27,7 +27,7 @@ import type {
   PatientNoteDTO,
   AppointmentDTO,
 } from '../api/types'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useDatabaseMode } from '../context/DatabaseModeContext'
 
 // Demo data fallback
 const DEMO_PATIENTS: PatientSummaryDTO[] = [
@@ -89,6 +89,7 @@ export function PatientChartPage() {
   const rawPatientId = paramId ? decodePhiId(paramId) : undefined
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { isDemoMode } = useDatabaseMode()
 
   const [patients, setPatients] = useState<PatientSummaryDTO[]>([])
   const [selectedPatient, setSelectedPatient] = useState<PatientSummaryDTO | null>(null)
@@ -136,7 +137,7 @@ export function PatientChartPage() {
   const [updatingAppt, setUpdatingAppt] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !user) {
+    if (isDemoMode || !user) {
       setPatients(DEMO_PATIENTS)
       if (rawPatientId) setSelectedPatient(DEMO_PATIENTS.find((p) => p.id === rawPatientId) ?? DEMO_PATIENTS[0])
       else setSelectedPatient(DEMO_PATIENTS[0])
@@ -167,7 +168,7 @@ export function PatientChartPage() {
         })
       }
       try {
-        if (!isSupabaseConfigured) {
+        if (isDemoMode) {
           setMedications(DEMO_MEDS)
           setResults(DEMO_RESULTS)
           setNotes(DEMO_NOTES)
@@ -202,7 +203,7 @@ export function PatientChartPage() {
     if (!noteContent.trim() || !selectedPatient || !user) return
     setSavingNote(true)
     try {
-      if (isSupabaseConfigured) {
+      if (!isDemoMode) {
         const note = await createPatientNote(selectedPatient.id, user.id, noteContent.trim(), noteVisibility)
         setNotes((prev) => [{ ...note, authorName: user.name ?? '' }, ...prev])
       } else {
@@ -225,7 +226,7 @@ export function PatientChartPage() {
     if (!rxMedName || !rxDosage || !rxSchedule || !rxInstructions || !selectedPatient || !user) return
     setSavingRx(true)
     try {
-      if (isSupabaseConfigured) {
+      if (!isDemoMode) {
         await createPrescription({
           doctorId: user.id, patientId: selectedPatient.id,
           medicationName: rxMedName, dosage: rxDosage, schedule: rxSchedule,
@@ -234,7 +235,7 @@ export function PatientChartPage() {
       }
       toast.success(`Prescription sent: ${rxMedName} ${rxDosage}`)
       setRxMedName(''); setRxDosage(''); setRxSchedule(''); setRxRefills(0); setRxPharmacy(''); setRxInstructions('')
-      if (isSupabaseConfigured) {
+      if (!isDemoMode) {
         const meds = await fetchPatientMedications(selectedPatient.id)
         setMedications(meds)
       } else {
@@ -252,7 +253,7 @@ export function PatientChartPage() {
     if (!labType.trim() || !selectedPatient || !user) return
     setSavingLab(true)
     try {
-      if (isSupabaseConfigured) {
+      if (!isDemoMode) {
         await orderLabTest({ patientId: selectedPatient.id, orderedBy: user.id, testType: labType.trim() })
       } else {
         setResults((prev) => [{ id: `res-${Date.now()}`, date: new Date().toISOString().slice(0,10), type: labType.trim(), summary: 'Ordered — awaiting results', status: 'In progress' }, ...prev])
@@ -269,7 +270,7 @@ export function PatientChartPage() {
   const handleUpdateAppt = async (apptId: string, status: AppointmentDTO['status']) => {
     setUpdatingAppt(apptId)
     try {
-      if (isSupabaseConfigured) {
+      if (!isDemoMode) {
         await updateAppointmentStatus(apptId, status, apptNotes[apptId])
       }
       setAppointments((prev) => prev.map((a) => a.id === apptId ? { ...a, status, notes: apptNotes[apptId] ?? a.notes } : a))
@@ -303,14 +304,14 @@ export function PatientChartPage() {
     setSavingMed(true)
     try {
       if (editMedId) {
-        if (isSupabaseConfigured) {
+        if (!isDemoMode) {
           await updateMedication(editMedId, { name: medName.trim(), dosage: medDosage.trim(), schedule: medSchedule.trim() })
         }
         setMedications((prev) => prev.map((m) => m.id === editMedId ? { ...m, name: medName.trim(), dosage: medDosage.trim(), schedule: medSchedule.trim() } : m))
         toast.success('Medication updated')
         setEditMedId(null)
       } else {
-        if (isSupabaseConfigured) {
+        if (!isDemoMode) {
           const med = await addMedication(selectedPatient.id, user.id, { name: medName.trim(), dosage: medDosage.trim(), schedule: medSchedule.trim() })
           setMedications((prev) => [med, ...prev])
         } else {
@@ -329,7 +330,7 @@ export function PatientChartPage() {
 
   const handleToggleMed = async (med: MedicationDTO) => {
     try {
-      if (isSupabaseConfigured) await toggleMedicationActive(med.id, !med.active)
+      if (!isDemoMode) await toggleMedicationActive(med.id, !med.active)
       setMedications((prev) => prev.map((m) => m.id === med.id ? { ...m, active: !m.active } : m))
       toast.success(med.active ? 'Medication deactivated' : 'Medication reactivated')
     } catch {
@@ -342,7 +343,7 @@ export function PatientChartPage() {
     if (!newStatus) return
     setSavingResult(resultId)
     try {
-      if (isSupabaseConfigured) await updateTestResultStatus(resultId, newStatus)
+      if (!isDemoMode) await updateTestResultStatus(resultId, newStatus)
       setResults((prev) => prev.map((r) => r.id === resultId ? { ...r, status: newStatus } : r))
       toast.success('Result status updated')
     } catch {
@@ -384,18 +385,17 @@ export function PatientChartPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex-1">
             <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Select Patient</label>
-            <select
+            <Select
+              accent="emerald"
               value={selectedPatient?.id ?? ''}
-              onChange={(e) => {
-                const p = patients.find((pt) => pt.id === e.target.value)
+              onChange={(val) => {
+                const p = patients.find((pt) => pt.id === val)
                 setSelectedPatient(p ?? null)
               }}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-            >
-              {patients.map((p) => (
-                <option key={p.id} value={p.id}>{p.name} — {p.mrn}</option>
-              ))}
-            </select>
+              placeholder="— Select a patient —"
+              options={patients.map((p) => ({ value: p.id, label: `${p.name} — ${p.mrn}` }))}
+              className="mt-1"
+            />
           </div>
           {selectedPatient && (
             <div className="text-xs text-slate-600 dark:text-slate-400 space-y-0.5">
@@ -564,15 +564,17 @@ export function PatientChartPage() {
                           <div className="flex flex-col items-end gap-2 ml-3">
                             <Badge variant={currentStatus === 'Normal' ? 'success' : currentStatus === 'Follow up' ? 'warning' : 'info'}>{currentStatus}</Badge>
                             <div className="flex items-center gap-1">
-                              <select
+                              <Select
+                                accent="emerald"
+                                size="sm"
                                 value={revisedStatuses[r.id] ?? r.status}
-                                onChange={(e) => setRevisedStatuses((prev) => ({ ...prev, [r.id]: e.target.value as TestResultDTO['status'] }))}
-                                className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-[0.65rem] text-slate-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
-                              >
-                                <option className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100" value="Normal">Normal</option>
-                                <option className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100" value="Follow up">Follow up</option>
-                                <option className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100" value="In progress">In progress</option>
-                              </select>
+                                onChange={(val) => setRevisedStatuses((prev) => ({ ...prev, [r.id]: val as TestResultDTO['status'] }))}
+                                options={[
+                                  { value: 'Normal', label: 'Normal' },
+                                  { value: 'Follow up', label: 'Follow up' },
+                                  { value: 'In progress', label: 'In progress' },
+                                ]}
+                              />
                               <button
                                 type="button"
                                 disabled={savingResult === r.id || (revisedStatuses[r.id] ?? r.status) === r.status}

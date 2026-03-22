@@ -6,8 +6,9 @@
  */
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Badge } from '../components/ui'
+import { Badge, Select } from '../components/ui'
 import { fetchAuditLog, type AuditLogEntry } from '../api/auditApi'
+import { useDatabaseMode } from '../context/DatabaseModeContext'
 
 // Seed some illustrative demo entries on first render so the page is never blank
 const DEMO_ENTRIES: AuditLogEntry[] = [
@@ -52,6 +53,7 @@ function actionVariant(action: string): 'error' | 'warning' | 'info' | 'success'
 }
 
 export function AuditLogPage() {
+  const { isDemoMode } = useDatabaseMode()
   const [entries, setEntries] = useState<AuditLogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -59,12 +61,17 @@ export function AuditLogPage() {
   const [filterAction, setFilterAction] = useState<string>('all')
 
   useEffect(() => {
+    if (isDemoMode) {
+      setEntries(DEMO_ENTRIES)
+      setLoading(false)
+      return
+    }
     setLoading(true)
     fetchAuditLog()
-      .then((live) => setEntries(live.length > 0 ? live : DEMO_ENTRIES))
-      .catch(() => { setEntries(DEMO_ENTRIES); toast.error('Failed to load audit log') })
+      .then((live) => setEntries(live))
+      .catch(() => { toast.error('Failed to load audit log') })
       .finally(() => setLoading(false))
-  }, [])
+  }, [isDemoMode])
 
   const roles = ['all', ...Array.from(new Set(entries.map((e) => e.userRole)))]
   const categories = ['all', 'phi', 'auth', 'admin']
@@ -113,28 +120,24 @@ export function AuditLogPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1 min-w-[180px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-slate-400 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500"
         />
-        <select
+        <Select
           value={filterRole}
-          onChange={(e) => setFilterRole(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-        >
-          {roles.map((r) => (
-            <option key={r} value={r} className="bg-white text-slate-900 dark:bg-slate-700 dark:text-slate-100">
-              {r === 'all' ? 'All Roles' : r.charAt(0).toUpperCase() + r.slice(1)}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={setFilterRole}
+          className="w-36"
+          options={roles.map((r) => ({
+            value: r,
+            label: r === 'all' ? 'All Roles' : r.charAt(0).toUpperCase() + r.slice(1),
+          }))}
+        />
+        <Select
           value={filterAction}
-          onChange={(e) => setFilterAction(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-        >
-          {categories.map((c) => (
-            <option key={c} value={c} className="bg-white text-slate-900 dark:bg-slate-700 dark:text-slate-100">
-              {c === 'all' ? 'All Events' : c.toUpperCase() + ' Events'}
-            </option>
-          ))}
-        </select>
+          onChange={setFilterAction}
+          className="w-40"
+          options={categories.map((c) => ({
+            value: c,
+            label: c === 'all' ? 'All Events' : c.toUpperCase() + ' Events',
+          }))}
+        />
       </div>
 
       {/* Table */}

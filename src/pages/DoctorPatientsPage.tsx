@@ -6,7 +6,7 @@ import { Badge } from '../components/ui'
 import { fetchPatientList } from '../api/doctorApi'
 import { patientChartPath } from '../utils/hipaa'
 import type { PatientSummaryDTO } from '../api/types'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useDatabaseMode } from '../context/DatabaseModeContext'
 
 const DEMO_PATIENTS: PatientSummaryDTO[] = [
   { id: 'demo-patient-001', name: 'Alex Johnson', mrn: 'MRN-000001', dob: '1985-04-12', insurance: 'BlueCross PPO', primaryDoctorId: 'demo-doctor-001', lastVisit: '2026-02-01', nextAppt: '2026-03-15', status: 'Active', activeMedicationCount: 2 },
@@ -19,13 +19,14 @@ const DEMO_PATIENTS: PatientSummaryDTO[] = [
 export function DoctorPatientsPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { isDemoMode } = useDatabaseMode()
   const [patients, setPatients] = useState<PatientSummaryDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !user) {
+    if (isDemoMode || !user) {
       setPatients(DEMO_PATIENTS)
       setLoading(false)
       return

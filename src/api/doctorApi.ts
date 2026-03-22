@@ -1,4 +1,7 @@
 import { supabase } from '../lib/supabase'
+
+type NeonRow = Record<string, unknown>
+import { isNeonConfigured, getNeonSql } from '../lib/neonClient'
 import type {
   DoctorScheduleDTO,
   PatientSummaryDTO,
@@ -17,6 +20,31 @@ import type {
 // ──────────────────────────────────────────────────────────
 export async function fetchTodaySchedule(doctorId: string): Promise<DoctorScheduleDTO[]> {
   const today = new Date().toISOString().slice(0, 10)
+
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      SELECT a.id, a.time, a.type, a.status,
+             p.id AS patient_id, p.name AS patient_name,
+             d.consultation_room
+      FROM appointments a
+      LEFT JOIN profiles p ON p.id = a.patient_id
+      LEFT JOIN doctors d ON d.id = a.doctor_id
+      WHERE a.doctor_id = ${doctorId} AND a.date = ${today}
+      ORDER BY a.time
+    `
+    return (rows as NeonRow[]).map((row) => ({
+      id: row.id as string,
+      appointmentId: row.id as string,
+      time: (row.time as string).slice(0, 5),
+      patient: (row.patient_name as string) ?? 'Unknown',
+      patientId: (row.patient_id as string) ?? '',
+      reason: row.type as string,
+      room: (row.consultation_room as string) ?? '',
+      status: row.status as DoctorScheduleDTO['status'],
+    }))
+  }
+
   const { data, error } = await supabase
     .from('appointments')
     .select(`
@@ -49,6 +77,30 @@ export async function fetchDoctorScheduleByDate(
   doctorId: string,
   date: string,
 ): Promise<DoctorScheduleDTO[]> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      SELECT a.id, a.time, a.type, a.status,
+             p.id AS patient_id, p.name AS patient_name,
+             d.consultation_room
+      FROM appointments a
+      LEFT JOIN profiles p ON p.id = a.patient_id
+      LEFT JOIN doctors d ON d.id = a.doctor_id
+      WHERE a.doctor_id = ${doctorId} AND a.date = ${date}
+      ORDER BY a.time
+    `
+    return (rows as NeonRow[]).map((row) => ({
+      id: row.id as string,
+      appointmentId: row.id as string,
+      time: (row.time as string).slice(0, 5),
+      patient: (row.patient_name as string) ?? 'Unknown',
+      patientId: (row.patient_id as string) ?? '',
+      reason: row.type as string,
+      room: (row.consultation_room as string) ?? '',
+      status: row.status as DoctorScheduleDTO['status'],
+    }))
+  }
+
   const { data, error } = await supabase
     .from('appointments')
     .select(`
@@ -81,6 +133,40 @@ export async function fetchDoctorScheduleByDate(
 // Patient List
 // ──────────────────────────────────────────────────────────
 export async function fetchPatientList(doctorId: string): Promise<PatientSummaryDTO[]> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const patients = await sql`
+      SELECT pat.id, pat.mrn, pat.dob, pat.insurance, p.name
+      FROM patients pat
+      LEFT JOIN profiles p ON p.id = pat.id
+      WHERE pat.primary_doctor_id = ${doctorId}
+    `
+    const results: PatientSummaryDTO[] = []
+    for (const pat of (patients as NeonRow[])) {
+      const [lastApptRows, nextApptRows, medRows] = await Promise.all([
+        sql`SELECT date FROM appointments WHERE patient_id = ${pat.id as string} AND status = 'Completed' ORDER BY date DESC LIMIT 1`,
+        sql`SELECT date FROM appointments WHERE patient_id = ${pat.id as string} AND status = 'Upcoming' ORDER BY date ASC LIMIT 1`,
+        sql`SELECT COUNT(*) AS cnt FROM medications WHERE patient_id = ${pat.id as string} AND active = true`,
+      ])
+      const lastVisit = ((lastApptRows as NeonRow[])[0]?.date as string) ?? '—'
+      const nextVisit = ((nextApptRows as NeonRow[])[0]?.date as string) ?? '—'
+      const status: PatientSummaryDTO['status'] = (nextApptRows as NeonRow[])[0] ? 'Follow-up' : 'Active'
+      results.push({
+        id: pat.id as string,
+        name: (pat.name as string) ?? 'Unknown',
+        mrn: pat.mrn as string,
+        dob: pat.dob as string,
+        insurance: pat.insurance as string | null,
+        primaryDoctorId: doctorId,
+        lastVisit,
+        nextAppt: nextVisit,
+        status,
+        activeMedicationCount: Number((medRows as NeonRow[])[0]?.cnt ?? 0),
+      })
+    }
+    return results
+  }
+
   const { data: assignedPatients, error } = await supabase
     .from('patients')
     .select('id, mrn, dob, insurance, profiles!patients_id_fkey(name)')
@@ -143,6 +229,15 @@ export async function updateAppointmentStatus(
   status: AppointmentDTO['status'],
   notes?: string,
 ): Promise<void> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    if (notes !== undefined) {
+      await sql`UPDATE appointments SET status = ${status}, notes = ${notes} WHERE id = ${appointmentId}`
+    } else {
+      await sql`UPDATE appointments SET status = ${status} WHERE id = ${appointmentId}`
+    }
+    return
+  }
   const update: Record<string, string> = { status }
   if (notes !== undefined) update.notes = notes
   const { error } = await supabase.from('appointments').update(update).eq('id', appointmentId)
@@ -150,6 +245,32 @@ export async function updateAppointmentStatus(
 }
 
 export async function fetchAppointmentById(appointmentId: string): Promise<AppointmentDTO | null> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      SELECT a.id, a.date, a.time, a.type, a.location, a.status, a.notes, a.doctor_id,
+             p.name AS doctor_name
+      FROM appointments a
+      LEFT JOIN profiles p ON p.id = a.doctor_id
+      WHERE a.id = ${appointmentId}
+      LIMIT 1
+    `
+    const apptRows = rows as NeonRow[]
+    if (!apptRows.length) return null
+    const row = apptRows[0]
+    return {
+      id: row.id as string,
+      date: row.date as string,
+      time: row.time as string,
+      provider: (row.doctor_name as string) ?? '',
+      providerId: row.doctor_id as string,
+      type: row.type as string,
+      location: (row.location as string) ?? '',
+      status: row.status as AppointmentDTO['status'],
+      notes: row.notes as string | null,
+    }
+  }
+
   const { data, error } = await supabase
     .from('appointments')
     .select(`
@@ -178,6 +299,23 @@ export async function fetchAppointmentById(appointmentId: string): Promise<Appoi
 // Doctor's availability
 // ──────────────────────────────────────────────────────────
 export async function fetchDoctorAvailability(doctorId: string): Promise<DoctorAvailabilityDTO[]> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      SELECT id, day_of_week, start_time, end_time, slot_duration_minutes
+      FROM doctor_availability
+      WHERE doctor_id = ${doctorId}
+      ORDER BY day_of_week
+    `
+    return (rows as NeonRow[]).map((row) => ({
+      id: row.id as string,
+      dayOfWeek: row.day_of_week as number,
+      startTime: row.start_time as string,
+      endTime: row.end_time as string,
+      slotDurationMinutes: row.slot_duration_minutes as number,
+    }))
+  }
+
   const { data, error } = await supabase
     .from('doctor_availability')
     .select('*')
@@ -198,6 +336,16 @@ export async function upsertAvailability(
   doctorId: string,
   slot: Omit<DoctorAvailabilityDTO, 'id'>,
 ): Promise<void> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    await sql`
+      INSERT INTO doctor_availability (doctor_id, day_of_week, start_time, end_time, slot_duration_minutes)
+      VALUES (${doctorId}, ${slot.dayOfWeek}, ${slot.startTime}, ${slot.endTime}, ${slot.slotDurationMinutes})
+      ON CONFLICT (doctor_id, day_of_week, start_time)
+      DO UPDATE SET end_time = EXCLUDED.end_time, slot_duration_minutes = EXCLUDED.slot_duration_minutes
+    `
+    return
+  }
   const { error } = await supabase
     .from('doctor_availability')
     .upsert({
@@ -211,6 +359,11 @@ export async function upsertAvailability(
 }
 
 export async function deleteAvailability(availabilityId: string): Promise<void> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    await sql`DELETE FROM doctor_availability WHERE id = ${availabilityId}`
+    return
+  }
   const { error } = await supabase.from('doctor_availability').delete().eq('id', availabilityId)
   if (error) throw new Error(error.message)
 }
@@ -220,6 +373,24 @@ export async function fetchBlockedTimes(
   monthStart?: string,
   monthEnd?: string,
 ): Promise<BlockedTimeDTO[]> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = monthStart && monthEnd
+      ? await sql`SELECT id, date, start_time, end_time, reason FROM doctor_blocked_times WHERE doctor_id = ${doctorId} AND date >= ${monthStart} AND date <= ${monthEnd} ORDER BY date`
+      : monthStart
+      ? await sql`SELECT id, date, start_time, end_time, reason FROM doctor_blocked_times WHERE doctor_id = ${doctorId} AND date >= ${monthStart} ORDER BY date`
+      : monthEnd
+      ? await sql`SELECT id, date, start_time, end_time, reason FROM doctor_blocked_times WHERE doctor_id = ${doctorId} AND date <= ${monthEnd} ORDER BY date`
+      : await sql`SELECT id, date, start_time, end_time, reason FROM doctor_blocked_times WHERE doctor_id = ${doctorId} ORDER BY date`
+    return (rows as NeonRow[]).map((row) => ({
+      id: row.id as string,
+      date: row.date as string,
+      startTime: row.start_time as string,
+      endTime: row.end_time as string,
+      reason: row.reason as string | null,
+    }))
+  }
+
   let query = supabase
     .from('doctor_blocked_times')
     .select('*')
@@ -242,6 +413,14 @@ export async function addBlockedTime(
   doctorId: string,
   entry: Omit<BlockedTimeDTO, 'id'>,
 ): Promise<void> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    await sql`
+      INSERT INTO doctor_blocked_times (doctor_id, date, start_time, end_time, reason)
+      VALUES (${doctorId}, ${entry.date}, ${entry.startTime}, ${entry.endTime}, ${entry.reason ?? null})
+    `
+    return
+  }
   const { error } = await supabase.from('doctor_blocked_times').insert({
     doctor_id: doctorId,
     date: entry.date,
@@ -253,6 +432,11 @@ export async function addBlockedTime(
 }
 
 export async function deleteBlockedTime(id: string): Promise<void> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    await sql`DELETE FROM doctor_blocked_times WHERE id = ${id}`
+    return
+  }
   const { error } = await supabase.from('doctor_blocked_times').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
@@ -264,6 +448,38 @@ export async function fetchPatientNotes(
   patientId: string,
   viewerRole: 'doctor' | 'admin' | 'lab' | 'nurse' | 'desk',
 ): Promise<PatientNoteDTO[]> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      SELECT pn.id, pn.content, pn.author_id, pn.visibility, pn.appointment_id, pn.created_at,
+             p.name AS author_name
+      FROM patient_notes pn
+      LEFT JOIN profiles p ON p.id = pn.author_id
+      WHERE pn.patient_id = ${patientId}
+      ORDER BY pn.created_at DESC
+    `
+    return (rows as NeonRow[])
+      .map((row) => {
+        let vis: string[]
+        try {
+          const raw = row.visibility
+          vis = Array.isArray(raw) ? raw as string[] : JSON.parse(raw as string) as string[]
+        } catch {
+          vis = ['doctor']
+        }
+        return {
+          id: row.id as string,
+          content: row.content as string,
+          authorId: row.author_id as string,
+          authorName: (row.author_name as string) ?? 'Unknown',
+          visibility: vis,
+          appointmentId: row.appointment_id as string | null,
+          createdAt: row.created_at as string,
+        }
+      })
+      .filter((note) => viewerRole === 'admin' || note.visibility.includes(viewerRole))
+  }
+
   const { data, error } = await supabase
     .from('patient_notes')
     .select('id, content, author_id, visibility, appointment_id, created_at, profiles!patient_notes_author_id_fkey(name)')
@@ -301,6 +517,25 @@ export async function createPatientNote(
   visibility: string[],
   appointmentId?: string | null,
 ): Promise<PatientNoteDTO> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      INSERT INTO patient_notes (patient_id, author_id, content, visibility, appointment_id)
+      VALUES (${patientId}, ${authorId}, ${content}, ${JSON.stringify(visibility)}, ${appointmentId ?? null})
+      RETURNING id, content, author_id, visibility, appointment_id, created_at
+    `
+    const row = (rows as NeonRow[])[0]
+    return {
+      id: row.id as string,
+      content: row.content as string,
+      authorId: row.author_id as string,
+      authorName: '',
+      visibility: Array.isArray(row.visibility) ? row.visibility as string[] : JSON.parse((row.visibility as string) ?? '["doctor"]'),
+      appointmentId: row.appointment_id as string | null,
+      createdAt: row.created_at as string,
+    }
+  }
+
   const { data, error } = await supabase
     .from('patient_notes')
     .insert({
@@ -338,6 +573,33 @@ export async function createPrescription(payload: {
   pharmacy?: string
   instructions: string
 }): Promise<PrescriptionDTO> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const medRows = await sql`
+      INSERT INTO medications (patient_id, prescribed_by, name, dosage, schedule, active, start_date)
+      VALUES (${payload.patientId}, ${payload.doctorId}, ${payload.medicationName}, ${payload.dosage}, ${payload.schedule}, true, ${new Date().toISOString().slice(0, 10)})
+      RETURNING id
+    `
+    const medId = (medRows as NeonRow[])[0].id as string
+    const rxRows = await sql`
+      INSERT INTO prescriptions (medication_id, doctor_id, patient_id, issued_date, refills, pharmacy, instructions)
+      VALUES (${medId}, ${payload.doctorId}, ${payload.patientId}, ${new Date().toISOString().slice(0, 10)}, ${payload.refills}, ${payload.pharmacy ?? null}, ${payload.instructions})
+      RETURNING id, issued_date, refills, pharmacy, instructions
+    `
+    const rx = (rxRows as NeonRow[])[0]
+    return {
+      id: rx.id as string,
+      medicationName: payload.medicationName,
+      dosage: payload.dosage,
+      doctorName: '',
+      patientName: '',
+      issuedDate: rx.issued_date as string,
+      refills: rx.refills as number,
+      pharmacy: rx.pharmacy as string | null,
+      instructions: rx.instructions as string,
+    }
+  }
+
   // First create the medication record
   const { data: med, error: medErr } = await supabase
     .from('medications')
@@ -387,6 +649,31 @@ export async function createPrescription(payload: {
 // Doctor inbox (messages)
 // ──────────────────────────────────────────────────────────
 export async function fetchDoctorInbox(doctorId: string): Promise<MessageDTO[]> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      SELECT m.id, m.subject, m.body, m.read, m.created_at, m.parent_id,
+             m.from_user_id, m.to_user_id,
+             p.name AS sender_name
+      FROM messages m
+      LEFT JOIN profiles p ON p.id = m.from_user_id
+      WHERE m.to_user_id = ${doctorId} OR m.from_user_id = ${doctorId}
+      ORDER BY m.created_at DESC
+    `
+    return (rows as NeonRow[]).map((row) => ({
+      id: row.id as string,
+      fromId: row.from_user_id as string,
+      from: (row.sender_name as string) ?? 'Unknown',
+      toId: row.to_user_id as string,
+      subject: row.subject as string,
+      preview: ((row.body as string) ?? '').slice(0, 100),
+      body: row.body as string,
+      date: (row.created_at as string).slice(0, 10),
+      read: row.read as boolean,
+      parentId: row.parent_id as string | null,
+    }))
+  }
+
   const { data, error } = await supabase
     .from('messages')
     .select(`
@@ -421,6 +708,30 @@ export async function replyToMessage(
   parentId: string,
   body: string,
 ): Promise<MessageDTO> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const parentRows = await sql`SELECT subject FROM messages WHERE id = ${parentId} LIMIT 1`
+    const typedParent = (parentRows as NeonRow[])[0]
+    const subject = typedParent ? `Re: ${typedParent.subject as string}` : 'Reply'
+    const rows = await sql`
+      INSERT INTO messages (from_user_id, to_user_id, subject, body, parent_id)
+      VALUES (${fromId}, ${toId}, ${subject}, ${body}, ${parentId})
+      RETURNING id, subject, body, read, created_at, from_user_id, to_user_id
+    `
+    const row = (rows as NeonRow[])[0]
+    return {
+      id: row.id as string,
+      fromId: row.from_user_id as string,
+      from: '',
+      toId: row.to_user_id as string,
+      subject: row.subject as string,
+      preview: (row.body as string).slice(0, 100),
+      body: row.body as string,
+      date: (row.created_at as string).slice(0, 10),
+      read: false,
+    }
+  }
+
   const { data: parent } = await supabase
     .from('messages')
     .select('subject')
@@ -454,6 +765,11 @@ export async function replyToMessage(
 }
 
 export async function markDoctorMessageRead(messageId: string): Promise<void> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    await sql`UPDATE messages SET read = true WHERE id = ${messageId}`
+    return
+  }
   await supabase.from('messages').update({ read: true }).eq('id', messageId)
 }
 
@@ -461,6 +777,27 @@ export async function markDoctorMessageRead(messageId: string): Promise<void> {
 // Patient chart data (for Open Chart)
 // ──────────────────────────────────────────────────────────
 export async function fetchPatientMedications(patientId: string): Promise<MedicationDTO[]> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      SELECT m.id, m.name, m.dosage, m.schedule, m.active, m.notes,
+             p.name AS prescribed_by_name
+      FROM medications m
+      LEFT JOIN profiles p ON p.id = m.prescribed_by
+      WHERE m.patient_id = ${patientId}
+      ORDER BY m.active DESC
+    `
+    return (rows as NeonRow[]).map((row) => ({
+      id: row.id as string,
+      name: row.name as string,
+      dosage: row.dosage as string,
+      schedule: row.schedule as string,
+      active: row.active as boolean,
+      prescribedBy: (row.prescribed_by_name as string) ?? null,
+      notes: row.notes as string | null,
+    }))
+  }
+
   const { data, error } = await supabase
     .from('medications')
     .select('id, name, dosage, schedule, active, notes, profiles!medications_prescribed_by_fkey(name)')
@@ -483,6 +820,24 @@ export async function fetchPatientMedications(patientId: string): Promise<Medica
 }
 
 export async function fetchPatientTestResults(patientId: string): Promise<TestResultDTO[]> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      SELECT id, date, type, summary, status, file_url
+      FROM test_results
+      WHERE patient_id = ${patientId}
+      ORDER BY date DESC
+    `
+    return (rows as NeonRow[]).map((row) => ({
+      id: row.id as string,
+      date: row.date as string,
+      type: row.type as string,
+      summary: row.summary as string,
+      status: row.status as TestResultDTO['status'],
+      fileUrl: row.file_url as string | null,
+    }))
+  }
+
   const { data, error } = await supabase
     .from('test_results')
     .select('id, date, type, summary, status, file_url')
@@ -504,6 +859,27 @@ export async function fetchPatientAppointmentHistory(
   patientId: string,
   doctorId: string,
 ): Promise<AppointmentDTO[]> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      SELECT id, date, time, type, location, status, notes, doctor_id
+      FROM appointments
+      WHERE patient_id = ${patientId} AND doctor_id = ${doctorId}
+      ORDER BY date DESC
+    `
+    return (rows as NeonRow[]).map((row) => ({
+      id: row.id as string,
+      date: row.date as string,
+      time: row.time as string,
+      provider: '',
+      providerId: row.doctor_id as string,
+      type: row.type as string,
+      location: (row.location as string) ?? '',
+      status: row.status as AppointmentDTO['status'],
+      notes: row.notes as string | null,
+    }))
+  }
+
   const { data, error } = await supabase
     .from('appointments')
     .select('id, date, time, type, location, status, notes, doctor_id')
@@ -531,6 +907,14 @@ export async function orderLabTest(payload: {
   testType: string
   summary?: string
 }): Promise<void> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    await sql`
+      INSERT INTO test_results (patient_id, ordered_by, date, type, summary, status)
+      VALUES (${payload.patientId}, ${payload.orderedBy}, ${new Date().toISOString().slice(0, 10)}, ${payload.testType}, ${payload.summary ?? 'Ordered — awaiting results'}, 'In progress')
+    `
+    return
+  }
   const { error } = await supabase.from('test_results').insert({
     patient_id: payload.patientId,
     ordered_by: payload.orderedBy,
@@ -550,6 +934,23 @@ export async function addMedication(
   prescribedBy: string,
   payload: { name: string; dosage: string; schedule: string },
 ): Promise<MedicationDTO> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      INSERT INTO medications (patient_id, prescribed_by, name, dosage, schedule, active, start_date)
+      VALUES (${patientId}, ${prescribedBy}, ${payload.name}, ${payload.dosage}, ${payload.schedule}, true, ${new Date().toISOString().slice(0, 10)})
+      RETURNING id, name, dosage, schedule, active
+    `
+    const row = (rows as NeonRow[])[0]
+    return {
+      id: row.id as string,
+      name: row.name as string,
+      dosage: row.dosage as string,
+      schedule: row.schedule as string,
+      active: row.active as boolean,
+    }
+  }
+
   const { data, error } = await supabase
     .from('medications')
     .insert({
@@ -577,11 +978,40 @@ export async function updateMedication(
   medicationId: string,
   payload: { name?: string; dosage?: string; schedule?: string },
 ): Promise<void> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    // Only update columns that were provided
+    if (payload.name !== undefined && payload.dosage !== undefined && payload.schedule !== undefined) {
+      await sql`UPDATE medications SET name = ${payload.name}, dosage = ${payload.dosage}, schedule = ${payload.schedule} WHERE id = ${medicationId}`
+    } else if (payload.name !== undefined && payload.dosage !== undefined) {
+      await sql`UPDATE medications SET name = ${payload.name}, dosage = ${payload.dosage} WHERE id = ${medicationId}`
+    } else if (payload.name !== undefined && payload.schedule !== undefined) {
+      await sql`UPDATE medications SET name = ${payload.name}, schedule = ${payload.schedule} WHERE id = ${medicationId}`
+    } else if (payload.dosage !== undefined && payload.schedule !== undefined) {
+      await sql`UPDATE medications SET dosage = ${payload.dosage}, schedule = ${payload.schedule} WHERE id = ${medicationId}`
+    } else if (payload.name !== undefined) {
+      await sql`UPDATE medications SET name = ${payload.name} WHERE id = ${medicationId}`
+    } else if (payload.dosage !== undefined) {
+      await sql`UPDATE medications SET dosage = ${payload.dosage} WHERE id = ${medicationId}`
+    } else if (payload.schedule !== undefined) {
+      await sql`UPDATE medications SET schedule = ${payload.schedule} WHERE id = ${medicationId}`
+    }
+    return
+  }
   const { error } = await supabase.from('medications').update(payload).eq('id', medicationId)
   if (error) throw new Error(error.message)
 }
 
 export async function toggleMedicationActive(medicationId: string, active: boolean): Promise<void> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    if (!active) {
+      await sql`UPDATE medications SET active = false, end_date = ${new Date().toISOString().slice(0, 10)} WHERE id = ${medicationId}`
+    } else {
+      await sql`UPDATE medications SET active = true WHERE id = ${medicationId}`
+    }
+    return
+  }
   const update: Record<string, unknown> = { active }
   if (!active) update.end_date = new Date().toISOString().slice(0, 10)
   const { error } = await supabase.from('medications').update(update).eq('id', medicationId)
@@ -595,6 +1025,11 @@ export async function updateTestResultStatus(
   testResultId: string,
   status: import('./types').ResultStatus,
 ): Promise<void> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    await sql`UPDATE test_results SET status = ${status} WHERE id = ${testResultId}`
+    return
+  }
   const { error } = await supabase.from('test_results').update({ status }).eq('id', testResultId)
   if (error) throw new Error(error.message)
 }

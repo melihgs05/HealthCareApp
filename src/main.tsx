@@ -10,22 +10,25 @@ import { AuthProvider } from './context/AuthContext'
 import { PatientDataProvider } from './context/PatientDataContext'
 import { SiteSettingsProvider } from './context/SiteSettingsContext'
 import { HIPAAProvider } from './context/HIPAAContext'
+import { DatabaseModeProvider } from './context/DatabaseModeContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <SiteSettingsProvider>
-        <AuthProvider>
-          <NotificationsProvider>
-            <PatientDataProvider>
-              <BrowserRouter>
-                <HIPAAProvider>
-                  <App />
-                </HIPAAProvider>
-              </BrowserRouter>
-            </PatientDataProvider>
-          </NotificationsProvider>
-        </AuthProvider>
+        <DatabaseModeProvider>
+          <AuthProvider>
+            <NotificationsProvider>
+              <PatientDataProvider>
+                <BrowserRouter>
+                  <HIPAAProvider>
+                    <App />
+                  </HIPAAProvider>
+                </BrowserRouter>
+              </PatientDataProvider>
+            </NotificationsProvider>
+          </AuthProvider>
+        </DatabaseModeProvider>
       </SiteSettingsProvider>
     </ThemeProvider>
   </StrictMode>,

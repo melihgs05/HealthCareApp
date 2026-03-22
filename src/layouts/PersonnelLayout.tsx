@@ -1,14 +1,9 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { AppNavbar } from '../components/ui/AppNavbar'
 import { HIPAANotice } from '../components/ui/HIPAANotice'
 import type { PersonnelSubrole } from '../api/types'
-
-const subroleLabel: Record<PersonnelSubrole | string, string> = {
-  lab: 'Laboratory',
-  nurse: 'Nursing',
-  desk: 'Front Desk',
-}
 
 const subroleColor: Record<PersonnelSubrole | string, string> = {
   lab: 'bg-indigo-600',
@@ -16,28 +11,21 @@ const subroleColor: Record<PersonnelSubrole | string, string> = {
   desk: 'bg-amber-600',
 }
 
-function buildNavItems(subrole: PersonnelSubrole | undefined) {
-  const items = [
-    { to: '/staff', label: 'Dashboard' },
-    { to: '/staff/tasks', label: 'My Tasks' },
-    { to: '/staff/messages', label: 'Messages' },
-  ]
-  if (subrole === 'lab') {
-    items.push({ to: '/staff/lab', label: 'Lab Orders' })
-  }
-  if (subrole === 'desk') {
-    items.push({ to: '/staff/register', label: 'Register Patient' })
-  }
-  items.push({ to: '/staff/settings', label: 'Settings' })
-  return items
-}
-
 export function PersonnelLayout() {
   const { user } = useAuth()
+  const { t } = useTranslation(['admin', 'common'])
   const subrole = user?.subrole as PersonnelSubrole | undefined
-  const navItems = buildNavItems(subrole)
   const dotColor = subroleColor[subrole ?? ''] ?? 'bg-slate-500'
-  const roleLabel = subroleLabel[subrole ?? ''] ?? 'Healthcare Staff'
+  const roleLabel = subrole ? t(`admin:personnel.subroles.${subrole}`) : t('admin:personnel.staffPortal')
+
+  const navItems = [
+    { to: '/staff', label: t('admin:personnel.nav.dashboard') },
+    { to: '/staff/tasks', label: t('admin:personnel.nav.myTasks') },
+    { to: '/staff/messages', label: t('admin:personnel.nav.messages') },
+    ...(subrole === 'lab' ? [{ to: '/staff/lab', label: t('admin:personnel.nav.labOrders') }] : []),
+    ...(subrole === 'desk' ? [{ to: '/staff/register', label: t('admin:personnel.nav.registerPatient') }] : []),
+    { to: '/staff/settings', label: t('admin:personnel.nav.settings') },
+  ]
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -50,7 +38,7 @@ export function PersonnelLayout() {
               {user?.name ? user.name.split(' ').filter(Boolean).slice(0,2).map((w: string) => w[0].toUpperCase()).join('') : 'ST'}
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Staff Portal</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('admin:personnel.staffPortal')}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">{roleLabel}</p>
             </div>
           </Link>
@@ -77,7 +65,7 @@ export function PersonnelLayout() {
           </nav>
 
           <div className="mt-4 rounded-2xl bg-slate-50 p-3 dark:bg-slate-700/50">
-            <p className="text-[0.65rem] uppercase tracking-wide text-slate-500 dark:text-slate-400">Logged in as</p>
+            <p className="text-[0.65rem] uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('admin:personnel.loggedInAs')}</p>
             <p className="mt-0.5 text-xs font-medium text-slate-800 dark:text-slate-200">{user?.name ?? 'Staff Member'}</p>
             <p className="text-[0.65rem] text-slate-500 dark:text-slate-400">{roleLabel}</p>
           </div>
@@ -86,7 +74,7 @@ export function PersonnelLayout() {
         <main className="flex min-w-0 flex-1 flex-col">
           <header className={`mb-4 flex flex-col gap-3 rounded-none lg:rounded-3xl ${dotColor} px-5 py-4 text-white shadow-md sm:flex-row sm:items-center sm:justify-between`}>
             <div>
-              <p className="text-xs uppercase tracking-wide text-white/70">Staff Portal · {roleLabel}</p>
+              <p className="text-xs uppercase tracking-wide text-white/70">{t('admin:personnel.staffPortal')} · {roleLabel}</p>
               <h1 className="mt-1 text-lg font-semibold">{user?.name ?? 'Staff Member'}</h1>
               <p className="mt-1 text-xs text-white/80 sm:text-sm">
                 {new Date().toLocaleDateString('default', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

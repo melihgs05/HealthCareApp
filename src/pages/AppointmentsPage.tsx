@@ -2,10 +2,10 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { usePatientData } from '../context/PatientDataContext'
-import { Badge } from '../components/ui'
+import { Badge, Select } from '../components/ui'
 import { fetchDoctors, fetchDoctorAvailableSlots } from '../api/patientApi'
 import type { DoctorInfoDTO, DoctorAvailabilitySlot } from '../api/types'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useDatabaseMode } from '../context/DatabaseModeContext'
 
 // Demo doctors fallback
 const DEMO_DOCTORS: DoctorInfoDTO[] = [
@@ -24,6 +24,7 @@ const DEMO_SLOTS: DoctorAvailabilitySlot[] = [
 export function AppointmentsPage() {
   const { appointments, requestAppointment } = usePatientData()
   const { t } = useTranslation(['portal', 'common'])
+  const { isDemoMode } = useDatabaseMode()
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
   const [showBooking, setShowBooking] = useState(false)
 
@@ -39,7 +40,7 @@ export function AppointmentsPage() {
 
   useEffect(() => {
     const load = async () => {
-      if (!isSupabaseConfigured) {
+      if (isDemoMode) {
         setDoctors(DEMO_DOCTORS)
         return
       }
@@ -51,7 +52,7 @@ export function AppointmentsPage() {
       }
     }
     void load()
-  }, [])
+  }, [isDemoMode])
 
   useEffect(() => {
     if (!selectedDoctorId || !selectedDate) {
@@ -63,7 +64,7 @@ export function AppointmentsPage() {
       setLoadingSlots(true)
       setSelectedTime('')
       try {
-        if (!isSupabaseConfigured) {
+        if (isDemoMode) {
           setAvailableSlots(DEMO_SLOTS)
         } else {
           const slots = await fetchDoctorAvailableSlots(selectedDoctorId, selectedDate)
@@ -76,7 +77,7 @@ export function AppointmentsPage() {
       }
     }
     void load()
-  }, [selectedDoctorId, selectedDate])
+  }, [selectedDoctorId, selectedDate, isDemoMode])
 
   const handleBook = async (event: FormEvent) => {
     event.preventDefault()
@@ -167,18 +168,15 @@ export function AppointmentsPage() {
             <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
               Select Doctor
             </label>
-            <select
+            <Select
               value={selectedDoctorId}
-              onChange={(e) => setSelectedDoctorId(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-            >
-              <option className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100" value="">— Choose a doctor —</option>
-              {doctors.map((d) => (
-                <option className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100" key={d.id} value={d.id}>
-                  {d.name}{d.specialty ? ` (${d.specialty})` : ''}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedDoctorId}
+              placeholder="— Choose a doctor —"
+              options={doctors.map((d) => ({
+                value: d.id,
+                label: d.name + (d.specialty ? ` (${d.specialty})` : ''),
+              }))}
+            />
             {selectedDoctor && (
               <p className="mt-1 text-[0.7rem] text-slate-500">
                 Room: {selectedDoctor.consultationRoom ?? 'TBD'}

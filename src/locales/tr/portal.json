@@ -42,7 +42,8 @@
     "updateMedsTitle": "İlaçları güncelle",
     "updateMedsDesc": "Mevcut listenizi gözden geçirin ve değişiklikleri not edin.",
     "downloadSummaryTitle": "Ziyaret özetini indir",
-    "downloadSummaryDesc": "Son ziyaretinizin ve test sonuçlarınızın bir kopyasını alın."
+    "downloadSummaryDesc": "Son ziyaretinizin ve test sonuçlarınızın bir kopyasını alın.",
+    "with": "ile"
   },
   "appointments": {
     "title": "Randevular",
@@ -73,7 +74,11 @@
     "mrnLabel": "Tıbbi kayıt numarası",
     "insuranceLabel": "Sigorta",
     "medicationsTitle": "Aktif ilaçlar",
-    "resultsTitle": "Son sonuçlar"
+    "resultsTitle": "Son sonuçlar",
+    "noProfile": "Bu hasta için kayıtlı profil bilgisi bulunmamaktadır.",
+    "noMedications": "Kayıtlı aktif ilaç bulunmamaktadır.",
+    "noResults": "Kayıtlı son test sonucu bulunmamaktadır.",
+    "noDataNotice": "İlaçlarınız ve test sonuçlarınız, sağlık ekibiniz kaydınıza girdiğinde burada görünecektir."
   },
   "activity": {
     "title": "Son aktiviteler",
@@ -99,7 +104,12 @@
     "downloadSuccess": "Ziyaret özeti indirildi.",
     "patientTitle": "Hasta",
     "visitTitle": "En son ziyaret",
-    "noVisit": "En son ziyaret ayrıntılarınız burada görünecektir.",
-    "resultsTitle": "Son sonuçlar"
+    "noPatientInfo": "Bu hasta için şu anda kayıtlı bilgi bulunmamaktadır.",
+    "noVisit": "Kayıtlı yakınşamadaki veya geçmiş ziyaret bulunmamaktadır. Bir randevu oluşturulduktan sonra burada görünecektir.",
+    "resultsTitle": "Son sonuçlar",
+    "noResults": "Kayıtlı son test sonucu bulunmamaktadır. Sonuçlar, sağlık ekibiniz tarafından eklendikten sonra burada görünecektir.",
+    "noDataNotice": "Ziyaret geçmişiniz ve test sonuçlarınız, sağlık ekibiniz bunları girdiğinde burada görünecektir.",
+    "at": "saat",
+    "locationLabel": "Lokasyon"
   }
 }

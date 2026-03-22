@@ -58,13 +58,20 @@ export function AppNavbar({ showLinks = false }: AppNavbarProps) {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-8">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5">
-          {/* Modern medical cross icon */}
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
-              <path d="M12 8v8M8 12h8" />
-            </svg>
-          </div>
+          {settings.logoUrl ? (
+            <img
+              src={settings.logoUrl}
+              alt={settings.appName}
+              className="h-8 max-w-[120px] object-contain"
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
+                <path d="M12 8v8M8 12h8" />
+              </svg>
+            </div>
+          )}
           <span className="text-sm text-slate-900 dark:text-white">
             {settings.appName}
           </span>

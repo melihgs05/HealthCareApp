@@ -6,10 +6,20 @@
  * session.  The choice is stored in sessionStorage so users must re-accept
  * after every login but not on every page navigation within a session.
  */
+import { useTranslation } from 'react-i18next'
 import { useHIPAA } from '../../context/HIPAAContext'
+
+const RULES = [
+  { icon: '🔒', key: 'rule1' },
+  { icon: '🚫', key: 'rule2' },
+  { icon: '📋', key: 'rule3' },
+  { icon: '⏱️', key: 'rule4' },
+  { icon: '🔔', key: 'rule5' },
+] as const
 
 export function HIPAANotice() {
   const { noticeAccepted, acceptNotice } = useHIPAA()
+  const { t } = useTranslation('common')
 
   if (noticeAccepted) return null
 
@@ -17,7 +27,7 @@ export function HIPAANotice() {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="HIPAA Compliance Notice"
+      aria-label={t('hipaa.notice.ariaLabel')}
       className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 backdrop-blur-sm"
     >
       <div className="mx-4 w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
@@ -29,35 +39,30 @@ export function HIPAANotice() {
             </svg>
           </span>
           <div>
-            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">HIPAA Compliance Notice</p>
-            <p className="text-[0.7rem] text-slate-500 dark:text-slate-400">Required before accessing protected health information</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{t('hipaa.notice.title')}</p>
+            <p className="text-[0.7rem] text-slate-500 dark:text-slate-400">{t('hipaa.notice.subtitle')}</p>
           </div>
         </div>
 
         {/* Body */}
         <div className="space-y-3 text-xs text-slate-700 dark:text-slate-300">
           <p>
-            You are about to access <strong>Protected Health Information (PHI)</strong> governed by the
-            Health Insurance Portability and Accountability Act (HIPAA).
+            {t('hipaa.notice.bodyStart')}{' '}
+            <strong>{t('hipaa.notice.bodyPhi')}</strong>{' '}
+            {t('hipaa.notice.bodyEnd')}
           </p>
 
           <ul className="space-y-1.5 list-none">
-            {[
-              { icon: '🔒', text: 'Access only the minimum information necessary for your current task.' },
-              { icon: '🚫', text: 'Do not share, copy, or disclose PHI to unauthorized individuals.' },
-              { icon: '📋', text: 'All actions you take are recorded in a HIPAA-compliant audit log.' },
-              { icon: '⏱️', text: 'Your session will automatically expire after 15 minutes of inactivity.' },
-              { icon: '🔔', text: 'Report any suspected breach immediately to your compliance officer.' },
-            ].map(({ icon, text }) => (
-              <li key={text} className="flex items-start gap-2 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-700/40">
+            {RULES.map(({ icon, key }) => (
+              <li key={key} className="flex items-start gap-2 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-700/40">
                 <span className="flex-shrink-0">{icon}</span>
-                <span>{text}</span>
+                <span>{t(`hipaa.notice.${key}`)}</span>
               </li>
             ))}
           </ul>
 
           <p className="text-[0.65rem] text-slate-400">
-            Unauthorized access or disclosure of PHI is a federal violation subject to civil and criminal penalties.
+            {t('hipaa.notice.disclaimer')}
           </p>
         </div>
 
@@ -67,7 +72,7 @@ export function HIPAANotice() {
           onClick={acceptNotice}
           className="mt-5 w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow hover:bg-blue-700 active:bg-blue-800 transition-colors"
         >
-          I acknowledge and agree to handle PHI responsibly
+          {t('hipaa.notice.ctaButton')}
         </button>
       </div>
     </div>

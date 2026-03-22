@@ -11,6 +11,10 @@ import { PersonnelLayout } from './layouts/PersonnelLayout'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { SignupPage } from './pages/auth/SignupPage'
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
+import { VerifyEmailPage } from './pages/auth/VerifyEmailPage'
+import { OAuthCallbackPage } from './pages/auth/OAuthCallbackPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { AppointmentsPage } from './pages/AppointmentsPage'
 import { MedicalSummaryPage } from './pages/MedicalSummaryPage'
@@ -94,6 +98,10 @@ function App() {
               isAuthenticated ? <Navigate to={roleHomePath(user!.role as UserRole)} replace /> : <SignupPage />
             }
           />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
         </Route>
 
         {/* ── Patient portal ── */}

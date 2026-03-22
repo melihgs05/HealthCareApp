@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { Badge } from '../components/ui'
 import { fetchMyTasks, updateTaskStatus } from '../api/personnelApi'
 import type { PersonnelTaskDTO } from '../api/types'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useDatabaseMode } from '../context/DatabaseModeContext'
 
 const DEMO_TASKS: PersonnelTaskDTO[] = [
   { id: 'task-001', title: 'Prepare patient Alex Johnson for Room 3A', status: 'pending', priority: 'high', assignedTo: 'demo-staff-001', createdBy: 'demo-doctor-001', createdAt: new Date().toISOString(), dueDate: new Date().toISOString().slice(0, 10) },
@@ -24,9 +24,10 @@ export function PersonnelTasksPage() {
   const [updating, setUpdating] = useState<string | null>(null)
 
   const staffId = user?.id ?? 'demo-staff-001'
+  const { isDemoMode } = useDatabaseMode()
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
+    if (isDemoMode) {
       setTasks(DEMO_TASKS)
       setLoading(false)
       return
@@ -40,7 +41,7 @@ export function PersonnelTasksPage() {
   const handleSetStatus = async (taskId: string, next: PersonnelTaskDTO['status']) => {
     setUpdating(taskId)
     try {
-      if (isSupabaseConfigured) await updateTaskStatus(taskId, next)
+      if (!isDemoMode) await updateTaskStatus(taskId, next)
       setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, status: next } : t))
     } catch {
       toast.error('Failed to update task')

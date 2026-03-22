@@ -11,7 +11,9 @@
     "users": "Kullanıcılar",
     "reports": "Raporlar",
     "settings": "Ayarlar",
-    "siteSettings": "Site Ayarları"
+    "siteSettings": "Site Ayarları",
+    "personnel": "Personel",
+    "auditLog": "Denetim Günlüğü"
   },
   "dashboard": {
     "activePatients": "Aktif hastalar",
@@ -33,6 +35,112 @@
     "integrationCms": "CMS",
     "statusOnline": "Çevrimiçi",
     "statusOffline": "Çevrimdışı",
-    "statusDegraded": "Kısmi Kesinti"
+    "statusDegraded": "Kısmi Kesinti",
+    "noActivity": "Son sistem aktivitesi bulunamadı.",
+    "noUsers": "Kullanıcı bulunamadı.",
+    "userActionsCol": "İşlemler"
+  },
+  "createUser": {
+    "buttonLabel": "+ Kullanıcı oluştur",
+    "title": "Yeni kullanıcı hesabı oluştur",
+    "nameLabel": "Ad Soyad",
+    "emailLabel": "E-posta adresi",
+    "passwordLabel": "Geçici şifre",
+    "roleLabel": "Rol",
+    "subroleLabel": "Personel türü",
+    "submitButton": "Hesap oluştur",
+    "submitting": "Oluşturuluyor\u2026",
+    "success": "Kullanıcı hesabı başarıyla oluşturuldu.",
+    "error": "Hesap oluşturulamadı. Lütfen tekrar deneyin."
+  },
+  "deleteUser": {
+    "button": "Sil",
+    "confirmPrompt": "Bu kullanıcı silinsin mi? Bu işlem geri alınamaz.",
+    "confirmButton": "Evet, sil",
+    "cancelButton": "İptal",
+    "success": "Kullanıcı başarıyla silindi.",
+    "error": "Kullanıcı silinemedi. Lütfen tekrar deneyin.",
+    "selfError": "Kendi hesabınızı silemezsiniz."
+  },
+  "siteSettings": {
+    "title": "Site Ayarları",
+    "subtitle": "Kaynak koduna dokunmadan tüm genel içerikleri, iletişim bilgilerini ve markalamayı yapılandırın. Değişiklikler anında kaydedilir ve hemen yayına girer.",
+    "resetButton": "Varsayılana sıfırla",
+    "saveButton": "Tüm ayarları kaydet",
+    "savedToast": "Site ayarları kaydedildi \u2014 değişiklikler yayında.",
+    "resetToast": "Ayarlar varsayılana sıfırlandı.",
+    "tabBranding": "Markalaşma",
+    "tabContact": "İletişim Bilgileri",
+    "tabLanding": "Açılış Sayfası",
+    "tabSocial": "Sosyal Medya & Bağlantılar",
+    "branding": {
+      "sectionTitle": "Marka & Kimlik",
+      "logoSectionTitle": "Logo",
+      "logoUrlLabel": "Logo URL",
+      "logoUrlPlaceholder": "https://alanadi.com/logo.png",
+      "logoUploadLabel": "Dosyadan yükle",
+      "logoPreviewAlt": "Logo önizleme",
+      "logoRemove": "Kaldır",
+      "appNameLabel": "Uygulama / Portal Adı",
+      "taglineLabel": "Slogan",
+      "hospitalNameLabel": "Hastane / Klinik Adı",
+      "licenseLabel": "Lisans Numarası",
+      "licensePlaceholder": "örn. MED-2024-001"
+    },
+    "contact": {
+      "sectionTitle": "İletişim Bilgileri",
+      "phoneLabel": "Ana Telefon Numarası",
+      "emergencyPhoneLabel": "Acil Telefon",
+      "emailLabel": "Destek E-postası",
+      "hoursLabel": "Çalışma Saatleri",
+      "addressLabel": "Ofis Adresi"
+    },
+    "landing": {
+      "heroTitle": "Ana Görsel Kaydırma Slaytları",
+      "slideLabel": "Slayt {{n}}",
+      "slideTitleLabel": "Başlık",
+      "slideSubtitleLabel": "Alt Başlık",
+      "slideImageLabel": "Arkaplan Görsel URL",
+      "slideImagePlaceholder": "https://images.unsplash.com/\u2026",
+      "aboutTitle": "Hakkımızda Bölümü",
+      "aboutLabelLabel": "Bölüm Etiketi (küçük metin)",
+      "aboutHeadingLabel": "Başlık",
+      "aboutDescLabel": "Açıklama",
+      "featureCardsTitle": "Özellik Kartları",
+      "cardLabel": "Kart {{n}}",
+      "cardTitleLabel": "Başlık",
+      "cardDescLabel": "Açıklama",
+      "ctaTitle": "Harekete Geçirici Şerit",
+      "ctaHeadingLabel": "Başlık",
+      "ctaButtonTextLabel": "Düğme Metni",
+      "ctaDescLabel": "Açıklama"
+    },
+    "social": {
+      "socialTitle": "Sosyal Medya",
+      "facebookLabel": "Facebook URL",
+      "twitterLabel": "Twitter / X URL",
+      "instagramLabel": "Instagram URL",
+      "linkedinLabel": "LinkedIn URL",
+      "footerTitle": "Alt Bilgi Bağlantıları",
+      "privacyLabel": "Gizlilik Politikası URL",
+      "termsLabel": "Kullanım Koşulları URL"
+    }
+  },
+  "personnel": {
+    "staffPortal": "Personel Portalı",
+    "loggedInAs": "Giriş yapan",
+    "subroles": {
+      "lab": "Laboratuvar",
+      "nurse": "Hemşirelik",
+      "desk": "Ön Büro"
+    },
+    "nav": {
+      "dashboard": "Kontrol Paneli",
+      "myTasks": "Görevlerim",
+      "messages": "Mesajlar",
+      "labOrders": "Lab Emirleri",
+      "registerPatient": "Hasta Kayıt",
+      "settings": "Ayarlar"
+    }
   }
 }

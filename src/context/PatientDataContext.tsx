@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useDatabaseMode } from './DatabaseModeContext'
 import {
   fetchPatientProfile,
   fetchAppointments,
@@ -109,6 +109,15 @@ const PatientDataContext = createContext<PatientDataContextValue | undefined>(un
 // ─────────────────────────────────────────────────────────────
 // Demo data (used when Supabase is not configured)
 // ─────────────────────────────────────────────────────────────
+const emptyProfile: PatientProfile = {
+  id: '',
+  name: '',
+  dob: '',
+  mrn: '',
+  primaryCareProvider: '',
+  insurance: '',
+}
+
 const demoProfile: PatientProfile = {
   id: 'demo-patient-001',
   name: 'Alex Johnson',
@@ -157,17 +166,28 @@ const demoData = {
 // ─────────────────────────────────────────────────────────────
 export function PatientDataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
+  const { isDemoMode } = useDatabaseMode()
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [profile, setProfile] = useState<PatientProfile>(demoProfile)
-  const [appointments, setAppointments] = useState<Appointment[]>(demoData.appointments)
-  const [medications, setMedications] = useState<Medication[]>(demoData.medications)
-  const [recentResults, setRecentResults] = useState<Result[]>(demoData.recentResults)
-  const [activity, setActivity] = useState<ActivityItem[]>(demoData.activity)
-  const [messages, setMessages] = useState<Message[]>(demoData.messages)
+  const [profile, setProfile] = useState<PatientProfile>(() => isDemoMode ? demoProfile : emptyProfile)
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [medications, setMedications] = useState<Medication[]>([])
+  const [recentResults, setRecentResults] = useState<Result[]>([])
+  const [activity, setActivity] = useState<ActivityItem[]>([])
+  const [messages, setMessages] = useState<Message[]>([])
 
   const loadData = useCallback(async () => {
-    if (!user || !isSupabaseConfigured) {
+    if (isDemoMode) {
+      setProfile(demoProfile)
+      setAppointments(demoData.appointments)
+      setMedications(demoData.medications)
+      setRecentResults(demoData.recentResults)
+      setActivity(demoData.activity)
+      setMessages(demoData.messages)
+      setIsLoading(false)
+      return
+    }
+    if (!user) {
       setIsLoading(false)
       return
     }
@@ -193,7 +213,7 @@ export function PatientDataProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }, [user])
+  }, [user, isDemoMode])
 
   useEffect(() => {
     void loadData()
@@ -201,7 +221,7 @@ export function PatientDataProvider({ children }: { children: ReactNode }) {
 
   const addMessage = useCallback(
     async ({ toId, from, subject, body }: { toId: string; from: string; subject: string; body: string }) => {
-      if (!isSupabaseConfigured) {
+      if (isDemoMode) {
         const now = new Date()
         const date = now.toISOString().slice(0, 10)
         setMessages((prev) => [
@@ -219,12 +239,12 @@ export function PatientDataProvider({ children }: { children: ReactNode }) {
       await logActivity(user.id, 'Message', `Sent message: ${subject}`)
       await loadData()
     },
-    [user, loadData],
+    [user, loadData, isDemoMode],
   )
 
   const requestAppointment = useCallback(
     async (payload: { doctorId: string; date: string; time: string; type: string; location?: string }) => {
-      if (!isSupabaseConfigured) {
+      if (isDemoMode) {
         const newAppt: Appointment = {
           id: `appt-${Date.now()}`,
           date: payload.date,
@@ -243,7 +263,7 @@ export function PatientDataProvider({ children }: { children: ReactNode }) {
       await logActivity(user.id, 'Appointment', `Booked appointment: ${payload.type}`)
       await loadData()
     },
-    [user, loadData],
+    [user, loadData, isDemoMode],
   )
 
   const nextAppointment = appointments

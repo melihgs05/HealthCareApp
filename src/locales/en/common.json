@@ -76,6 +76,29 @@
     "generic": "Something went wrong. Please try again.",
     "required": "This field is required."
   },
+  "hipaa": {
+    "notice": {
+      "ariaLabel": "HIPAA Compliance Notice",
+      "title": "HIPAA Compliance Notice",
+      "subtitle": "Required before accessing protected health information",
+      "bodyStart": "You are about to access",
+      "bodyPhi": "Protected Health Information (PHI)",
+      "bodyEnd": "governed by the Health Insurance Portability and Accountability Act (HIPAA).",
+      "rule1": "Access only the minimum information necessary for your current task.",
+      "rule2": "Do not share, copy, or disclose PHI to unauthorized individuals.",
+      "rule3": "All actions you take are recorded in a HIPAA-compliant audit log.",
+      "rule4": "Your session will automatically expire after 15 minutes of inactivity.",
+      "rule5": "Report any suspected breach immediately to your compliance officer.",
+      "disclaimer": "Unauthorized access or disclosure of PHI is a federal violation subject to civil and criminal penalties.",
+      "ctaButton": "I acknowledge and agree to handle PHI responsibly"
+    },
+    "idleWarning": {
+      "title": "Session Expiring",
+      "subtitle": "HIPAA auto-logout policy",
+      "body": "You have been inactive. Your session will automatically end in {{time}} to protect patient health information.",
+      "ctaButton": "I\u2019m still here \u2014 keep me signed in"
+    }
+  },
   "settings": {
     "title": "Account Settings",
     "subtitle": "Manage your personal information and security preferences.",

@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useAuth } from './AuthContext'
+import { useDatabaseMode } from './DatabaseModeContext'
 import type { UserRole } from '../api/types'
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'alert'
@@ -63,11 +64,16 @@ function getInitialNotifications(role: UserRole | undefined): Notification[] {
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
-  const [notifications, setNotifications] = useState<Notification[]>(() => getInitialNotifications(undefined))
+  const { isDemoMode } = useDatabaseMode()
+  const [notifications, setNotifications] = useState<Notification[]>([])
 
   useEffect(() => {
-    setNotifications(getInitialNotifications(user?.role))
-  }, [user?.role])
+    if (isDemoMode) {
+      setNotifications(getInitialNotifications(user?.role))
+    } else {
+      setNotifications([])
+    }
+  }, [user?.role, isDemoMode])
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.read).length,

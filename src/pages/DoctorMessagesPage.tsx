@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { Badge } from '../components/ui'
 import { fetchDoctorInbox, replyToMessage, markDoctorMessageRead } from '../api/doctorApi'
 import type { MessageDTO } from '../api/types'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useDatabaseMode } from '../context/DatabaseModeContext'
 
 const DEMO_MESSAGES: MessageDTO[] = [
   {
@@ -26,6 +26,7 @@ const DEMO_MESSAGES: MessageDTO[] = [
 
 export function DoctorMessagesPage() {
   const { user } = useAuth()
+  const { isDemoMode } = useDatabaseMode()
   const [messages, setMessages] = useState<MessageDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<MessageDTO | null>(null)
@@ -36,7 +37,7 @@ export function DoctorMessagesPage() {
   const doctorId = user?.id ?? 'demo-doctor-001'
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
+    if (isDemoMode) {
       setMessages(DEMO_MESSAGES)
       setLoading(false)
       return
@@ -45,13 +46,13 @@ export function DoctorMessagesPage() {
       .then(setMessages)
       .catch(() => toast.error('Failed to load messages'))
       .finally(() => setLoading(false))
-  }, [doctorId])
+  }, [doctorId, isDemoMode])
 
   const handleSelect = async (msg: MessageDTO) => {
     setSelected(msg)
     setReply('')
     if (!msg.read) {
-      if (isSupabaseConfigured) {
+      if (!isDemoMode) {
         try { await markDoctorMessageRead(msg.id) } catch { /* ignore */ }
       }
       setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, read: true } : m))
@@ -63,7 +64,7 @@ export function DoctorMessagesPage() {
     if (!reply.trim() || !selected || !user) return
     setSendingReply(true)
     try {
-      if (isSupabaseConfigured) {
+      if (!isDemoMode) {
         await replyToMessage(selected.id, doctorId, selected.fromId!, reply.trim())
       }
       toast.success('Reply sent')

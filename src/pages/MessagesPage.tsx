@@ -2,9 +2,10 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { usePatientData } from '../context/PatientDataContext'
+import { Select } from '../components/ui'
 import { fetchDoctors } from '../api/patientApi'
 import type { DoctorInfoDTO } from '../api/types'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useDatabaseMode } from '../context/DatabaseModeContext'
 
 const DEMO_DOCTORS: DoctorInfoDTO[] = [
   { id: 'demo-doctor-001', name: 'Dr. Emily Carter', specialty: 'Internal Medicine', consultationRoom: 'Room 3A', availableDays: [1,2,3,4,5] },
@@ -14,6 +15,7 @@ const DEMO_DOCTORS: DoctorInfoDTO[] = [
 export function MessagesPage() {
   const { messages, addMessage } = usePatientData()
   const { t } = useTranslation(['portal', 'common'])
+  const { isDemoMode } = useDatabaseMode()
   const [isComposing, setIsComposing] = useState(false)
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
@@ -23,7 +25,7 @@ export function MessagesPage() {
 
   useEffect(() => {
     const load = async () => {
-      if (!isSupabaseConfigured) { setDoctors(DEMO_DOCTORS); return }
+      if (isDemoMode) { setDoctors(DEMO_DOCTORS); return }
       try { setDoctors(await fetchDoctors()) } catch { setDoctors(DEMO_DOCTORS) }
     }
     void load()
@@ -80,18 +82,15 @@ export function MessagesPage() {
             {t('portal:messages.composeTitle')}
           </p>
           <div className="mt-2 space-y-2 text-xs">
-            <select
+            <Select
               value={selectedDoctorId}
-              onChange={(e) => setSelectedDoctorId(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-            >
-              <option className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100" value="">— Select recipient —</option>
-              {doctors.map((d) => (
-                <option className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100" key={d.id} value={d.id}>
-                  {d.name}{d.specialty ? ` · ${d.specialty}` : ''}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedDoctorId}
+              placeholder="— Select recipient —"
+              options={doctors.map((d) => ({
+                value: d.id,
+                label: d.name + (d.specialty ? ` · ${d.specialty}` : ''),
+              }))}
+            />
             <input
               type="text"
               value={subject}

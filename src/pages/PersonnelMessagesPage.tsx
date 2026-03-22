@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { Badge } from '../components/ui'
 import { fetchDoctorInbox, replyToMessage, markDoctorMessageRead } from '../api/doctorApi'
 import type { MessageDTO } from '../api/types'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useDatabaseMode } from '../context/DatabaseModeContext'
 
 const DEMO_MESSAGES: MessageDTO[] = [
   {
@@ -31,9 +31,10 @@ export function PersonnelMessagesPage() {
   const [searchQ, setSearchQ] = useState('')
 
   const staffId = user?.id ?? 'demo-staff-001'
+  const { isDemoMode } = useDatabaseMode()
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
+    if (isDemoMode) {
       setMessages(DEMO_MESSAGES)
       setLoading(false)
       return
@@ -48,7 +49,7 @@ export function PersonnelMessagesPage() {
     setSelected(msg)
     setReply('')
     if (!msg.read) {
-      if (isSupabaseConfigured) {
+      if (!isDemoMode) {
         try { await markDoctorMessageRead(msg.id) } catch { /* ignore */ }
       }
       setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, read: true } : m))
@@ -60,7 +61,7 @@ export function PersonnelMessagesPage() {
     if (!reply.trim() || !selected || !user) return
     setSendingReply(true)
     try {
-      if (isSupabaseConfigured) {
+      if (!isDemoMode) {
         await replyToMessage(staffId, selected.fromId, selected.id, reply.trim())
       }
       toast.success('Reply sent')

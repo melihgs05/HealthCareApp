@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { fetchTodaySchedule, fetchPatientList, fetchDoctorInbox } from '../api/doctorApi'
 import { patientChartPath } from '../utils/hipaa'
 import type { DoctorScheduleDTO, PatientSummaryDTO, MessageDTO } from '../api/types'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useDatabaseMode } from '../context/DatabaseModeContext'
 
 const DEMO_APPTS: DoctorScheduleDTO[] = [
   { id: 'd-appt-001', time: '09:00', patient: 'Alex Johnson', patientId: 'demo-patient-001', reason: 'Annual physical', room: 'Room 3A', status: 'Upcoming', appointmentId: 'd-appt-001' },
@@ -34,6 +34,7 @@ export function DoctorDashboardPage() {
   const { t } = useTranslation('doctor')
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { isDemoMode } = useDatabaseMode()
   const [patientSearch, setPatientSearch] = useState('')
   const [todayAppointments, setTodayAppointments] = useState<DoctorScheduleDTO[]>([])
   const [patientList, setPatientList] = useState<PatientSummaryDTO[]>([])
@@ -41,7 +42,7 @@ export function DoctorDashboardPage() {
   const [loadingSchedule, setLoadingSchedule] = useState(true)
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !user) {
+    if (isDemoMode || !user) {
       setTodayAppointments(DEMO_APPTS)
       setPatientList(DEMO_PATIENTS)
       setInboxMessages(DEMO_INBOX)

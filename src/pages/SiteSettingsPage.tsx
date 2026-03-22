@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import {
   useSiteSettings,
@@ -7,13 +8,6 @@ import {
 } from '../context/SiteSettingsContext'
 
 type Tab = 'branding' | 'contact' | 'landing' | 'social'
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'branding', label: 'Branding' },
-  { id: 'contact', label: 'Contact Info' },
-  { id: 'landing', label: 'Landing Page' },
-  { id: 'social', label: 'Social & Links' },
-]
 
 const inputClass =
   'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:border-sky-500 dark:focus:ring-sky-900/40'
@@ -60,22 +54,42 @@ function Field({
 }
 
 export function SiteSettingsPage() {
+  const { t } = useTranslation('admin')
   const { settings, updateSettings, resetSettings } = useSiteSettings()
   const [activeTab, setActiveTab] = useState<Tab>('branding')
   const [local, setLocal] = useState<SiteSettings>({ ...settings })
+  const logoInputRef = useRef<HTMLInputElement>(null)
+
+  const TABS: { id: Tab; label: string }[] = [
+    { id: 'branding', label: t('siteSettings.tabBranding') },
+    { id: 'contact', label: t('siteSettings.tabContact') },
+    { id: 'landing', label: t('siteSettings.tabLanding') },
+    { id: 'social', label: t('siteSettings.tabSocial') },
+  ]
 
   const set = (key: keyof SiteSettings) => (value: string) =>
     setLocal((prev) => ({ ...prev, [key]: value }))
 
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string
+      setLocal((prev) => ({ ...prev, logoUrl: dataUrl }))
+    }
+    reader.readAsDataURL(file)
+  }
+
   const handleSave = () => {
     updateSettings(local)
-    toast.success('Site settings saved — changes are now live.')
+    toast.success(t('siteSettings.savedToast'))
   }
 
   const handleReset = () => {
     resetSettings()
     setLocal({ ...DEFAULT_SITE_SETTINGS })
-    toast('Settings reset to defaults.', { icon: '↩️' })
+    toast(t('siteSettings.resetToast'), { icon: '↩️' })
   }
 
   return (
@@ -84,11 +98,10 @@ export function SiteSettingsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            Site Settings
+            {t('siteSettings.title')}
           </h2>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            Configure all public-facing content, contact info, and branding without touching
-            source code. Changes are saved instantly and go live immediately.
+            {t('siteSettings.subtitle')}
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
@@ -97,14 +110,14 @@ export function SiteSettingsPage() {
             onClick={handleReset}
             className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
           >
-            Reset defaults
+            {t('siteSettings.resetButton')}
           </button>
           <button
             type="button"
             onClick={handleSave}
             className="rounded-xl bg-sky-600 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-500"
           >
-            Save all settings
+            {t('siteSettings.saveButton')}
           </button>
         </div>
       </div>
@@ -135,32 +148,76 @@ export function SiteSettingsPage() {
         {activeTab === 'branding' && (
           <div className="space-y-6">
             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-              Brand &amp; Identity
+              {t('siteSettings.branding.sectionTitle')}
             </h3>
+
+            {/* Logo */}
+            <div>
+              <p className={labelClass}>{t('siteSettings.branding.logoSectionTitle')}</p>
+              <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50 space-y-3">
+                {local.logoUrl && (
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={local.logoUrl}
+                      alt={t('siteSettings.branding.logoPreviewAlt')}
+                      className="h-12 max-w-[160px] object-contain rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setLocal((prev) => ({ ...prev, logoUrl: '' }))}
+                      className="rounded-xl border border-rose-200 bg-white px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:border-rose-800/50 dark:bg-slate-800 dark:text-rose-400"
+                    >
+                      {t('siteSettings.branding.logoRemove')}
+                    </button>
+                  </div>
+                )}
+                <Field
+                  label={t('siteSettings.branding.logoUrlLabel')}
+                  value={local.logoUrl}
+                  onChange={set('logoUrl')}
+                  placeholder={t('siteSettings.branding.logoUrlPlaceholder')}
+                />
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleLogoFileChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                >
+                  📁 {t('siteSettings.branding.logoUploadLabel')}
+                </button>
+              </div>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
-                label="App / Portal Name"
+                label={t('siteSettings.branding.appNameLabel')}
                 value={local.appName}
                 onChange={set('appName')}
                 placeholder="CareBridge"
               />
               <Field
-                label="Tagline"
+                label={t('siteSettings.branding.taglineLabel')}
                 value={local.tagline}
                 onChange={set('tagline')}
                 placeholder="Your health, your way."
               />
               <Field
-                label="Hospital / Clinic Name"
+                label={t('siteSettings.branding.hospitalNameLabel')}
                 value={local.hospitalName}
                 onChange={set('hospitalName')}
                 placeholder="CareBridge Medical Center"
               />
               <Field
-                label="License Number"
+                label={t('siteSettings.branding.licenseLabel')}
                 value={local.licenseNumber}
                 onChange={set('licenseNumber')}
-                placeholder="e.g. MED-2024-001"
+                placeholder={t('siteSettings.branding.licensePlaceholder')}
               />
             </div>
           </div>
@@ -170,36 +227,36 @@ export function SiteSettingsPage() {
         {activeTab === 'contact' && (
           <div className="space-y-6">
             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-              Contact Information
+              {t('siteSettings.contact.sectionTitle')}
             </h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
-                label="Main Phone Number"
+                label={t('siteSettings.contact.phoneLabel')}
                 value={local.contactPhone}
                 onChange={set('contactPhone')}
                 placeholder="(555) 123-4567"
               />
               <Field
-                label="Emergency Phone"
+                label={t('siteSettings.contact.emergencyPhoneLabel')}
                 value={local.emergencyPhone}
                 onChange={set('emergencyPhone')}
                 placeholder="911"
               />
               <Field
-                label="Support Email"
+                label={t('siteSettings.contact.emailLabel')}
                 value={local.contactEmail}
                 onChange={set('contactEmail')}
                 placeholder="support@carebridge.health"
               />
               <Field
-                label="Office Hours"
+                label={t('siteSettings.contact.hoursLabel')}
                 value={local.officeHours}
                 onChange={set('officeHours')}
                 placeholder="Mon–Fri, 8:00 AM – 6:00 PM"
               />
               <div className="sm:col-span-2">
                 <Field
-                  label="Office Address"
+                  label={t('siteSettings.contact.addressLabel')}
                   value={local.contactAddress}
                   onChange={set('contactAddress')}
                   placeholder="123 Health Way, Medical District, NY 10001"
@@ -217,31 +274,31 @@ export function SiteSettingsPage() {
             {/* Hero slides */}
             <div>
               <h3 className="mb-4 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Hero Carousel Slides
+                {t('siteSettings.landing.heroTitle')}
               </h3>
               <div className="space-y-4">
                 {([1, 2, 3, 4] as const).map((n) => (
                   <div key={n} className={sectionClass}>
                     <p className="mb-3 text-[0.68rem] font-semibold uppercase tracking-wider text-slate-400">
-                      Slide {n}
+                      {t('siteSettings.landing.slideLabel', { n })}
                     </p>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Field
-                        label="Title"
+                        label={t('siteSettings.landing.slideTitleLabel')}
                         value={local[`slide${n}Title` as keyof SiteSettings]}
                         onChange={set(`slide${n}Title` as keyof SiteSettings)}
                       />
                       <Field
-                        label="Subtitle"
+                        label={t('siteSettings.landing.slideSubtitleLabel')}
                         value={local[`slide${n}Subtitle` as keyof SiteSettings]}
                         onChange={set(`slide${n}Subtitle` as keyof SiteSettings)}
                       />
                       <div className="sm:col-span-2">
                         <Field
-                          label="Background Image URL"
+                          label={t('siteSettings.landing.slideImageLabel')}
                           value={local[`slide${n}Image` as keyof SiteSettings]}
                           onChange={set(`slide${n}Image` as keyof SiteSettings)}
-                          placeholder="https://images.unsplash.com/..."
+                          placeholder={t('siteSettings.landing.slideImagePlaceholder')}
                         />
                       </div>
                     </div>
@@ -253,25 +310,25 @@ export function SiteSettingsPage() {
             {/* About section */}
             <div>
               <h3 className="mb-4 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                About Section
+                {t('siteSettings.landing.aboutTitle')}
               </h3>
               <div className={sectionClass}>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field
-                    label="Section Label (small text)"
+                    label={t('siteSettings.landing.aboutLabelLabel')}
                     value={local.aboutTitle}
                     onChange={set('aboutTitle')}
                     placeholder="About CareBridge"
                   />
                   <Field
-                    label="Heading"
+                    label={t('siteSettings.landing.aboutHeadingLabel')}
                     value={local.aboutSubtitle}
                     onChange={set('aboutSubtitle')}
                     placeholder="Connecting patients with their healthcare"
                   />
                   <div className="sm:col-span-2">
                     <Field
-                      label="Description"
+                      label={t('siteSettings.landing.aboutDescLabel')}
                       value={local.aboutDescription}
                       onChange={set('aboutDescription')}
                       multiline
@@ -284,22 +341,22 @@ export function SiteSettingsPage() {
             {/* Feature cards */}
             <div>
               <h3 className="mb-4 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Feature Cards
+                {t('siteSettings.landing.featureCardsTitle')}
               </h3>
               <div className="grid gap-4 sm:grid-cols-3">
                 {([1, 2, 3] as const).map((n) => (
                   <div key={n} className={sectionClass}>
                     <p className="mb-3 text-[0.68rem] font-semibold uppercase tracking-wider text-slate-400">
-                      Card {n}
+                      {t('siteSettings.landing.cardLabel', { n })}
                     </p>
                     <div className="space-y-3">
                       <Field
-                        label="Title"
+                        label={t('siteSettings.landing.cardTitleLabel')}
                         value={local[`feature${n}Title` as keyof SiteSettings]}
                         onChange={set(`feature${n}Title` as keyof SiteSettings)}
                       />
                       <Field
-                        label="Description"
+                        label={t('siteSettings.landing.cardDescLabel')}
                         value={local[`feature${n}Desc` as keyof SiteSettings]}
                         onChange={set(`feature${n}Desc` as keyof SiteSettings)}
                         multiline
@@ -313,25 +370,25 @@ export function SiteSettingsPage() {
             {/* CTA strip */}
             <div>
               <h3 className="mb-4 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Call-to-Action Strip
+                {t('siteSettings.landing.ctaTitle')}
               </h3>
               <div className={sectionClass}>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field
-                    label="Heading"
+                    label={t('siteSettings.landing.ctaHeadingLabel')}
                     value={local.ctaHeading}
                     onChange={set('ctaHeading')}
                     placeholder="Your health journey starts here"
                   />
                   <Field
-                    label="Button Text"
+                    label={t('siteSettings.landing.ctaButtonTextLabel')}
                     value={local.ctaButtonText}
                     onChange={set('ctaButtonText')}
                     placeholder="Get Started"
                   />
                   <div className="sm:col-span-2">
                     <Field
-                      label="Description"
+                      label={t('siteSettings.landing.ctaDescLabel')}
                       value={local.ctaDescription}
                       onChange={set('ctaDescription')}
                       multiline
@@ -349,29 +406,29 @@ export function SiteSettingsPage() {
           <div className="space-y-6">
             <div>
               <h3 className="mb-4 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Social Media
+                {t('siteSettings.social.socialTitle')}
               </h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
-                  label="Facebook URL"
+                  label={t('siteSettings.social.facebookLabel')}
                   value={local.socialFacebook}
                   onChange={set('socialFacebook')}
                   placeholder="https://facebook.com/yourclinic"
                 />
                 <Field
-                  label="Twitter / X URL"
+                  label={t('siteSettings.social.twitterLabel')}
                   value={local.socialTwitter}
                   onChange={set('socialTwitter')}
                   placeholder="https://twitter.com/yourclinic"
                 />
                 <Field
-                  label="Instagram URL"
+                  label={t('siteSettings.social.instagramLabel')}
                   value={local.socialInstagram}
                   onChange={set('socialInstagram')}
                   placeholder="https://instagram.com/yourclinic"
                 />
                 <Field
-                  label="LinkedIn URL"
+                  label={t('siteSettings.social.linkedinLabel')}
                   value={local.socialLinkedin}
                   onChange={set('socialLinkedin')}
                   placeholder="https://linkedin.com/company/yourclinic"
@@ -380,17 +437,17 @@ export function SiteSettingsPage() {
             </div>
             <div>
               <h3 className="mb-4 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Footer Links
+                {t('siteSettings.social.footerTitle')}
               </h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
-                  label="Privacy Policy URL"
+                  label={t('siteSettings.social.privacyLabel')}
                   value={local.privacyPolicyUrl}
                   onChange={set('privacyPolicyUrl')}
                   placeholder="/privacy or https://..."
                 />
                 <Field
-                  label="Terms of Service URL"
+                  label={t('siteSettings.social.termsLabel')}
                   value={local.termsUrl}
                   onChange={set('termsUrl')}
                   placeholder="/terms or https://..."

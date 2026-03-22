@@ -12,7 +12,7 @@ import {
 } from '../api/personnelApi'
 import { createPatientRecord } from '../api/adminApi'
 import type { PersonnelTaskDTO, PersonnelPermissionDTO } from '../api/types'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { useDatabaseMode } from '../context/DatabaseModeContext'
 
 // ─── Demo data ───────────────────────────────────────────────────
 const DEMO_TASKS: PersonnelTaskDTO[] = [
@@ -59,9 +59,10 @@ export function PersonnelDashboardPage() {
   const [registeringPatient, setRegisteringPatient] = useState(false)
 
   const staffId = user?.id ?? 'demo-staff-001'
+  const { isDemoMode } = useDatabaseMode()
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
+    if (isDemoMode) {
       setTasks(DEMO_TASKS)
       setPermissions(DEMO_PERMISSIONS.filter((p) => p.subrole === subrole))
       if (subrole === 'lab') setLabOrders(DEMO_LAB_ORDERS)
@@ -88,12 +89,12 @@ export function PersonnelDashboardPage() {
       }
     }
     void load()
-  }, [staffId, subrole])
+  }, [staffId, subrole, isDemoMode])
 
   const handleStatusToggle = async (taskId: string, currentStatus: PersonnelTaskDTO['status']) => {
     const next: PersonnelTaskDTO['status'] = currentStatus === 'pending' ? 'in_progress' : currentStatus === 'in_progress' ? 'completed' : 'pending'
     try {
-      if (isSupabaseConfigured) await updateTaskStatus(taskId, next)
+      if (!isDemoMode) await updateTaskStatus(taskId, next)
       setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, status: next } : t))
     } catch { toast.error('Failed to update task') }
   }
@@ -103,7 +104,7 @@ export function PersonnelDashboardPage() {
     if (!selectedTestId || !resultSummary.trim()) return
     setSubmittingResult(true)
     try {
-      if (isSupabaseConfigured) await updateTestResult(selectedTestId, resultSummary, 'Normal')
+      if (!isDemoMode) await updateTestResult(selectedTestId, resultSummary, 'Normal')
       setLabOrders((prev) => prev.map((o) => o.id === selectedTestId ? { ...o, status: 'completed' } : o))
       toast.success('Lab result submitted')
       setSelectedTestId(null)
@@ -116,7 +117,7 @@ export function PersonnelDashboardPage() {
     if (!regName || !regDob) return
     setRegisteringPatient(true)
     try {
-      if (isSupabaseConfigured) {
+      if (!isDemoMode) {
         await createPatientRecord({ name: regName, email: `${regName.toLowerCase().replace(/\s+/g, '.')}@carebridge.demo`, dob: regDob, phone: regPhone, insurance: regInsurance, createdBy: user?.id ?? 'admin' })
       }
       toast.success(`Patient ${regName} registered`)

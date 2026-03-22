@@ -14,6 +14,7 @@ export type SiteSettings = {
   tagline: string
   hospitalName: string
   licenseNumber: string
+  logoUrl: string
   // Contact
   contactPhone: string
   contactEmail: string
@@ -63,6 +64,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   tagline: 'Your health, your way.',
   hospitalName: 'CareBridge Medical Center',
   licenseNumber: '',
+  logoUrl: '',
   contactPhone: '(555) 123-4567',
   contactEmail: 'support@carebridge.health',
   contactAddress: '123 Health Way, Medical District, NY 10001',

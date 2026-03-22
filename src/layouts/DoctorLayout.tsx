@@ -10,9 +10,9 @@ export function DoctorLayout() {
 
   const navItems = [
     { to: '/doctor', label: t('doctor:nav.today') },
-    { to: '/doctor/calendar', label: 'Calendar' },
-    { to: '/doctor/patients', label: 'Patients' },
-    { to: '/doctor/messages', label: 'Messages' },
+    { to: '/doctor/calendar', label: t('doctor:nav.calendar') },
+    { to: '/doctor/patients', label: t('doctor:nav.patients') },
+    { to: '/doctor/messages', label: t('doctor:nav.messages') },
     { to: '/doctor/settings', label: t('common:settings.accountSettings') },
   ]
 

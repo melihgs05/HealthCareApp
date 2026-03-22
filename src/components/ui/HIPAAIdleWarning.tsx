@@ -4,10 +4,12 @@
  * Displayed when the user has been idle for 13+ minutes.
  * Counts down to automatic logout at 15 minutes (HIPAA § 164.312(a)(2)(iii)).
  */
+import { useTranslation } from 'react-i18next'
 import { useHIPAA } from '../../context/HIPAAContext'
 
 export function HIPAAIdleWarning() {
   const { idleSecondsLeft, resetIdle } = useHIPAA()
+  const { t } = useTranslation('common')
 
   if (idleSecondsLeft === null) return null
 
@@ -33,15 +35,13 @@ export function HIPAAIdleWarning() {
             </svg>
           </span>
           <div>
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Session Expiring</p>
-            <p className="text-[0.7rem] text-slate-500 dark:text-slate-400">HIPAA auto-logout policy</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('common:hipaa.idleWarning.title')}</p>
+            <p className="text-[0.7rem] text-slate-500 dark:text-slate-400">{t('common:hipaa.idleWarning.subtitle')}</p>
           </div>
         </div>
 
         <p className="text-xs text-slate-700 dark:text-slate-300 mb-4">
-          You have been inactive. Your session will automatically end in{' '}
-          <span className="font-mono font-semibold text-amber-600 dark:text-amber-400">{label}</span>{' '}
-          to protect patient health information.
+          {t('common:hipaa.idleWarning.body', { time: <span className="font-mono font-semibold text-amber-600 dark:text-amber-400">{label}</span> })}
         </p>
 
         <button
@@ -49,7 +49,7 @@ export function HIPAAIdleWarning() {
           onClick={resetIdle}
           className="w-full rounded-2xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-amber-600 active:bg-amber-700 transition-colors"
         >
-          I'm still here — keep me signed in
+          {t('common:hipaa.idleWarning.ctaButton')}
         </button>
       </div>
     </div>

@@ -42,7 +42,8 @@
     "updateMedsTitle": "Update medications",
     "updateMedsDesc": "Review your current list and note any changes.",
     "downloadSummaryTitle": "Download visit summary",
-    "downloadSummaryDesc": "Get a copy of your recent visit and test results."
+    "downloadSummaryDesc": "Get a copy of your recent visit and test results.",
+    "with": "with"
   },
   "appointments": {
     "title": "Appointments",
@@ -73,7 +74,11 @@
     "mrnLabel": "Medical record number",
     "insuranceLabel": "Insurance",
     "medicationsTitle": "Active medications",
-    "resultsTitle": "Recent results"
+    "resultsTitle": "Recent results",
+    "noProfile": "No patient profile information is on record at this time.",
+    "noMedications": "No active medications on record.",
+    "noResults": "No recent test results on record.",
+    "noDataNotice": "Your medications and test results will appear here once your care team has entered them into your record."
   },
   "activity": {
     "title": "Recent activity",
@@ -99,7 +104,12 @@
     "downloadSuccess": "Visit summary downloaded.",
     "patientTitle": "Patient",
     "visitTitle": "Most recent visit",
-    "noVisit": "Your most recent visit details will appear here.",
-    "resultsTitle": "Recent results"
+    "noPatientInfo": "No patient information is on record at this time.",
+    "noVisit": "No upcoming or recent visit on record. Your next appointment will appear here once scheduled.",
+    "resultsTitle": "Recent results",
+    "noResults": "No recent test results on record. Results will appear here once your care team adds them.",
+    "noDataNotice": "Your visit history and test results will appear here once your care team has entered them.",
+    "at": "at",
+    "locationLabel": "Location"
   }
 }

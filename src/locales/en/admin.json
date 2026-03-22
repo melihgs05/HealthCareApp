@@ -11,7 +11,9 @@
     "users": "Users",
     "reports": "Reports",
     "settings": "Settings",
-    "siteSettings": "Site Settings"
+    "siteSettings": "Site Settings",
+    "personnel": "Personnel",
+    "auditLog": "Audit Log"
   },
   "dashboard": {
     "activePatients": "Active patients",
@@ -33,6 +35,112 @@
     "integrationCms": "CMS",
     "statusOnline": "Online",
     "statusOffline": "Offline",
-    "statusDegraded": "Degraded"
+    "statusDegraded": "Degraded",
+    "noActivity": "No recent system activity.",
+    "noUsers": "No users found.",
+    "userActionsCol": "Actions"
+  },
+  "createUser": {
+    "buttonLabel": "+ Create user",
+    "title": "Create new user account",
+    "nameLabel": "Full name",
+    "emailLabel": "Email address",
+    "passwordLabel": "Temporary password",
+    "roleLabel": "Role",
+    "subroleLabel": "Staff type",
+    "submitButton": "Create account",
+    "submitting": "Creating\u2026",
+    "success": "User account created successfully.",
+    "error": "Failed to create account. Please try again."
+  },
+  "deleteUser": {
+    "button": "Delete",
+    "confirmPrompt": "Delete this user? This cannot be undone.",
+    "confirmButton": "Yes, delete",
+    "cancelButton": "Cancel",
+    "success": "User deleted successfully.",
+    "error": "Failed to delete user. Please try again.",
+    "selfError": "You cannot delete your own account."
+  },
+  "siteSettings": {
+    "title": "Site Settings",
+    "subtitle": "Configure all public-facing content, contact info, and branding without touching source code. Changes are saved instantly and go live immediately.",
+    "resetButton": "Reset defaults",
+    "saveButton": "Save all settings",
+    "savedToast": "Site settings saved \u2014 changes are now live.",
+    "resetToast": "Settings reset to defaults.",
+    "tabBranding": "Branding",
+    "tabContact": "Contact Info",
+    "tabLanding": "Landing Page",
+    "tabSocial": "Social & Links",
+    "branding": {
+      "sectionTitle": "Brand & Identity",
+      "logoSectionTitle": "Logo",
+      "logoUrlLabel": "Logo URL",
+      "logoUrlPlaceholder": "https://yourdomain.com/logo.png",
+      "logoUploadLabel": "Upload from file",
+      "logoPreviewAlt": "Logo preview",
+      "logoRemove": "Remove",
+      "appNameLabel": "App / Portal Name",
+      "taglineLabel": "Tagline",
+      "hospitalNameLabel": "Hospital / Clinic Name",
+      "licenseLabel": "License Number",
+      "licensePlaceholder": "e.g. MED-2024-001"
+    },
+    "contact": {
+      "sectionTitle": "Contact Information",
+      "phoneLabel": "Main Phone Number",
+      "emergencyPhoneLabel": "Emergency Phone",
+      "emailLabel": "Support Email",
+      "hoursLabel": "Office Hours",
+      "addressLabel": "Office Address"
+    },
+    "landing": {
+      "heroTitle": "Hero Carousel Slides",
+      "slideLabel": "Slide {{n}}",
+      "slideTitleLabel": "Title",
+      "slideSubtitleLabel": "Subtitle",
+      "slideImageLabel": "Background Image URL",
+      "slideImagePlaceholder": "https://images.unsplash.com/\u2026",
+      "aboutTitle": "About Section",
+      "aboutLabelLabel": "Section Label (small text)",
+      "aboutHeadingLabel": "Heading",
+      "aboutDescLabel": "Description",
+      "featureCardsTitle": "Feature Cards",
+      "cardLabel": "Card {{n}}",
+      "cardTitleLabel": "Title",
+      "cardDescLabel": "Description",
+      "ctaTitle": "Call-to-Action Strip",
+      "ctaHeadingLabel": "Heading",
+      "ctaButtonTextLabel": "Button Text",
+      "ctaDescLabel": "Description"
+    },
+    "social": {
+      "socialTitle": "Social Media",
+      "facebookLabel": "Facebook URL",
+      "twitterLabel": "Twitter / X URL",
+      "instagramLabel": "Instagram URL",
+      "linkedinLabel": "LinkedIn URL",
+      "footerTitle": "Footer Links",
+      "privacyLabel": "Privacy Policy URL",
+      "termsLabel": "Terms of Service URL"
+    }
+  },
+  "personnel": {
+    "staffPortal": "Staff Portal",
+    "loggedInAs": "Logged in as",
+    "subroles": {
+      "lab": "Laboratory",
+      "nurse": "Nursing",
+      "desk": "Front Desk"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "myTasks": "My Tasks",
+      "messages": "Messages",
+      "labOrders": "Lab Orders",
+      "registerPatient": "Register Patient",
+      "settings": "Settings"
+    }
   }
 }
