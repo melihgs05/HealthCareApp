@@ -8,6 +8,9 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { isNeonConfigured, getNeonSql } from '../lib/neonClient'
+
+const DB_SETTINGS_KEY = 'site_settings'
 
 export type SiteSettings = {
   // Branding
@@ -134,13 +137,43 @@ const SiteSettingsContext = createContext<SiteSettingsContextValue | undefined>(
 export function SiteSettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<SiteSettings>(loadSettings)
 
+  // On mount: hydrate from DB (overrides localStorage so all deployments share the same settings)
+  useEffect(() => {
+    if (!isNeonConfigured) return
+    void (async () => {
+      try {
+        const sql = getNeonSql()
+        const rows = await sql`SELECT value FROM system_settings WHERE key = ${DB_SETTINGS_KEY} LIMIT 1`
+        if (rows.length && rows[0].value) {
+          const dbSettings = JSON.parse(rows[0].value as string) as Partial<SiteSettings>
+          const merged = { ...DEFAULT_SITE_SETTINGS, ...dbSettings }
+          setSettings(merged)
+          try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)) } catch { /* ignore */ }
+        }
+      } catch { /* ignore */ }
+    })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const updateSettings = useCallback((patch: Partial<SiteSettings>) => {
     setSettings((prev) => {
       const next = { ...prev, ...patch }
       try {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-      } catch {
-        // ignore
+      } catch { /* ignore */ }
+      // Persist to DB (fire-and-forget)
+      if (isNeonConfigured) {
+        void (async () => {
+          try {
+            const sql = getNeonSql()
+            const value = JSON.stringify(next)
+            await sql`
+              INSERT INTO system_settings (key, value)
+              VALUES (${DB_SETTINGS_KEY}, ${value})
+              ON CONFLICT (key) DO UPDATE SET value = ${value}, updated_at = now()
+            `
+          } catch { /* ignore */ }
+        })()
       }
       return next
     })
@@ -149,8 +182,14 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
   const resetSettings = useCallback(() => {
     try {
       window.localStorage.removeItem(STORAGE_KEY)
-    } catch {
-      // ignore
+    } catch { /* ignore */ }
+    if (isNeonConfigured) {
+      void (async () => {
+        try {
+          const sql = getNeonSql()
+          await sql`DELETE FROM system_settings WHERE key = ${DB_SETTINGS_KEY}`
+        } catch { /* ignore */ }
+      })()
     }
     setSettings({ ...DEFAULT_SITE_SETTINGS })
   }, [])
