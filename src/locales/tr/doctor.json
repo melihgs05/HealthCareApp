@@ -38,6 +38,19 @@
     "addNote": "Not ekle",
     "ePrescribe": "E-reçete",
     "orderLab": "Lab iste",
-    "viewAll": "Tümünü görüntüle"
+    "viewAll": "Tümünü görüntüle",
+    "inpatientTasksTitle": "Yatan Hasta Görevleri",
+    "inpatientTasksSubtitle": "Yatan hasta yatışlarından size atanan periyodik kontrol görevleri.",
+    "inpatientTasksEmpty": "Atanmış yatan hasta görevi yok.",
+    "inpatientTaskPatient": "Hasta",
+    "inpatientTaskDue": "Zaman",
+    "taskDone": "Tamamlandı",
+    "taskAddNote": "Not Ekle",
+    "taskNotePlaceholder": "Bu hastanın kartına klinik not yazın…",
+    "taskNoteSave": "Notu Kaydet",
+    "taskCompleteSuccess": "Görev tamamlandı olarak işaretlendi.",
+    "taskCompleteError": "Görev güncellenemedi.",
+    "taskNoteSuccess": "Not hasta kartına eklendi.",
+    "taskNoteError": "Not kaydedilemedi."
   }
 }

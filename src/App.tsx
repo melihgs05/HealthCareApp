@@ -33,7 +33,11 @@ import { PersonnelManagementPage } from './pages/PersonnelManagementPage'
 import { PersonnelDashboardPage } from './pages/PersonnelDashboardPage'
 import { PersonnelTasksPage } from './pages/PersonnelTasksPage'
 import { PersonnelMessagesPage } from './pages/PersonnelMessagesPage'
+import { RegisterPatientPage } from './pages/RegisterPatientPage'
+import { LabOrdersPage } from './pages/LabOrdersPage'
+import { InpatientManagementPage } from './pages/InpatientManagementPage'
 import { AuditLogPage } from './pages/AuditLogPage'
+import { AdminRoomsPage } from './pages/AdminRoomsPage'
 import { HIPAAIdleWarning } from './components/ui/HIPAAIdleWarning'
 import type { UserRole } from './api/types'
 
@@ -148,6 +152,9 @@ function App() {
           <Route path="/staff" element={<PersonnelDashboardPage />} />
           <Route path="/staff/tasks" element={<PersonnelTasksPage />} />
           <Route path="/staff/messages" element={<PersonnelMessagesPage />} />
+          <Route path="/staff/lab" element={<LabOrdersPage />} />
+          <Route path="/staff/register" element={<RegisterPatientPage />} />
+          <Route path="/staff/inpatient" element={<InpatientManagementPage />} />
           <Route path="/staff/settings" element={<AccountSettingsPage />} />
         </Route>
 
@@ -163,6 +170,7 @@ function App() {
           <Route path="/admin/personnel" element={<PersonnelManagementPage />} />
           <Route path="/admin/audit-log" element={<AuditLogPage />} />
           <Route path="/admin/site-settings" element={<SiteSettingsPage />} />
+          <Route path="/admin/rooms" element={<AdminRoomsPage />} />
           <Route path="/admin/settings" element={<AccountSettingsPage />} />
         </Route>
 

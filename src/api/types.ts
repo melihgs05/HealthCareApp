@@ -293,3 +293,68 @@ export type PersonnelPermissionDTO = {
   permission: string
   granted: boolean
 }
+
+// ──────────────────────────────────────────────────────────
+// Inpatient — Rooms
+// ──────────────────────────────────────────────────────────
+export type RoomType = 'general' | 'icu' | 'surgical' | 'pediatric' | 'maternity' | 'isolation'
+export type RoomStatus = 'available' | 'occupied' | 'maintenance' | 'reserved'
+
+export type RoomDTO = {
+  id: string
+  number: string
+  floor: number
+  wing: string | null
+  type: RoomType
+  capacity: number
+  status: RoomStatus
+  notes: string | null
+  currentPatientId?: string | null
+  currentPatientName?: string | null
+}
+
+// ──────────────────────────────────────────────────────────
+// Inpatient — Admissions
+// ──────────────────────────────────────────────────────────
+export type AdmissionType = 'emergency' | 'elective' | 'transfer'
+export type AdmissionStatus = 'active' | 'discharged' | 'transferred'
+
+export type AdmissionDTO = {
+  id: string
+  patientId: string
+  patientName: string
+  roomId: string | null
+  roomNumber: string | null
+  admittedBy: string | null
+  admittedByName: string | null
+  primaryDoctorId: string | null
+  primaryDoctorName: string | null
+  admissionType: AdmissionType
+  diagnosis: string | null
+  notes: string | null
+  admittedAt: string
+  expectedDischarge: string | null
+  dischargedAt: string | null
+  status: AdmissionStatus
+}
+
+// ──────────────────────────────────────────────────────────
+// Inpatient — Periodic Controls
+// ──────────────────────────────────────────────────────────
+export type PeriodicControlDTO = {
+  id: string
+  admissionId: string
+  patientId: string
+  patientName?: string | null
+  title: string
+  description: string | null
+  frequencyHours: number
+  nextDue: string
+  doctorId: string | null
+  doctorName: string | null
+  nurseId: string | null
+  nurseName: string | null
+  createdBy: string
+  active: boolean
+  createdAt: string
+}

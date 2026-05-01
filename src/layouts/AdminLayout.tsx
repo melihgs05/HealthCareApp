@@ -19,6 +19,7 @@ export function AdminLayout() {
   const navItems: { to: string; label: string; icon?: ReactNode }[] = [
     { to: '/admin', label: t('admin:nav.overview') },
     { to: '/admin/personnel', label: t('admin:nav.personnel') },
+    { to: '/admin/rooms', label: t('admin:nav.rooms') },
     { to: '/admin/audit-log', label: t('admin:nav.auditLog'), icon: <ShieldIcon /> },
     { to: '/admin/site-settings', label: t('admin:nav.siteSettings') },
     { to: '/admin/settings', label: t('common:settings.accountSettings') },

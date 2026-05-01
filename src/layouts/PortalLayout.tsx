@@ -47,15 +47,26 @@ export function PortalLayout() {
                 end={item.to === '/portal'}
                 className={({ isActive }) =>
                   [
-                    'flex items-center justify-between rounded-2xl px-3 py-2.5 transition-colors',
+                    'group flex items-center justify-between rounded-2xl px-3 py-2.5 transition-colors',
                     isActive
                       ? 'bg-sky-50 text-sky-900 dark:bg-sky-900/30 dark:text-sky-300'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700/60 dark:hover:text-slate-100',
                   ].join(' ')
                 }
               >
-                <span>{item.label}</span>
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-200 dark:bg-slate-600" />
+                {({ isActive }) => (
+                  <>
+                    <span>{item.label}</span>
+                    <span
+                      className={[
+                        'h-1.5 w-1.5 rounded-full transition-colors',
+                        isActive
+                          ? 'bg-sky-400 dark:bg-sky-400'
+                          : 'bg-slate-200 dark:bg-slate-600 group-hover:bg-sky-300 dark:group-hover:bg-sky-400',
+                      ].join(' ')}
+                    />
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>

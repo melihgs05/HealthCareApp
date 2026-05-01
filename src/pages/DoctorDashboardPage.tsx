@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Badge, Avatar } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
-import { fetchTodaySchedule, fetchPatientList, fetchDoctorInbox } from '../api/doctorApi'
+import { fetchTodaySchedule, fetchPatientList, fetchDoctorInbox, createPatientNote } from '../api/doctorApi'
+import { fetchMyTasks, updateTaskStatus } from '../api/personnelApi'
 import { patientChartPath } from '../utils/hipaa'
-import type { DoctorScheduleDTO, PatientSummaryDTO, MessageDTO } from '../api/types'
+import type { DoctorScheduleDTO, PatientSummaryDTO, MessageDTO, PersonnelTaskDTO } from '../api/types'
 import { useDatabaseMode } from '../context/DatabaseModeContext'
 
 const DEMO_APPTS: DoctorScheduleDTO[] = [
@@ -39,13 +40,21 @@ export function DoctorDashboardPage() {
   const [todayAppointments, setTodayAppointments] = useState<DoctorScheduleDTO[]>([])
   const [patientList, setPatientList] = useState<PatientSummaryDTO[]>([])
   const [inboxMessages, setInboxMessages] = useState<MessageDTO[]>([])
+  const [inpatientTasks, setInpatientTasks] = useState<PersonnelTaskDTO[]>([])
   const [loadingSchedule, setLoadingSchedule] = useState(true)
+
+  // Task action state
+  const [noteTaskId, setNoteTaskId] = useState<string | null>(null)
+  const [noteText, setNoteText] = useState('')
+  const [savingNote, setSavingNote] = useState(false)
+  const [completingId, setCompletingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (isDemoMode || !user) {
       setTodayAppointments(DEMO_APPTS)
       setPatientList(DEMO_PATIENTS)
       setInboxMessages(DEMO_INBOX)
+      setInpatientTasks([])
       setLoadingSchedule(false)
       return
     }
@@ -54,10 +63,14 @@ export function DoctorDashboardPage() {
       fetchTodaySchedule(user.id),
       fetchPatientList(user.id),
       fetchDoctorInbox(user.id),
-    ]).then(([appts, patients, inbox]) => {
+      fetchMyTasks(user.id),
+    ]).then(([appts, patients, inbox, tasks]) => {
       setTodayAppointments(appts)
       setPatientList(patients)
       setInboxMessages(inbox)
+      setInpatientTasks((tasks as PersonnelTaskDTO[]).filter((t) =>
+        t.title.startsWith('Periodic Control:') && t.status !== 'completed'
+      ))
     }).catch(() => toast.error('Failed to load dashboard data')).finally(() => setLoadingSchedule(false))
   }, [user])
 
@@ -71,6 +84,37 @@ export function DoctorDashboardPage() {
     { key: 'newMessages', value: String(unreadCount), hint: 'newMessagesHint', hintVars: {} },
     { key: 'resultsToSign', value: '0', hint: 'resultsToSignHint', hintVars: {} },
   ]
+
+  const handleCompleteTask = async (taskId: string) => {
+    setCompletingId(taskId)
+    try {
+      if (!isDemoMode) await updateTaskStatus(taskId, 'completed')
+      setInpatientTasks((prev) => prev.filter((t) => t.id !== taskId))
+      if (noteTaskId === taskId) { setNoteTaskId(null); setNoteText('') }
+      toast.success(t('doctor:dashboard.taskCompleteSuccess'))
+    } catch {
+      toast.error(t('doctor:dashboard.taskCompleteError'))
+    } finally {
+      setCompletingId(null)
+    }
+  }
+
+  const handleSaveNote = async (task: PersonnelTaskDTO) => {
+    if (!noteText.trim() || !task.patientId) return
+    setSavingNote(true)
+    try {
+      if (!isDemoMode) {
+        await createPatientNote(task.patientId, user!.id, noteText.trim(), ['doctor'])
+      }
+      toast.success(t('doctor:dashboard.taskNoteSuccess'))
+      setNoteTaskId(null)
+      setNoteText('')
+    } catch {
+      toast.error(t('doctor:dashboard.taskNoteError'))
+    } finally {
+      setSavingNote(false)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -254,6 +298,98 @@ export function DoctorDashboardPage() {
           </table>
         </div>
       </section>
+
+      {/* Inpatient tasks */}
+      {inpatientTasks.length > 0 && (
+        <section className="rounded-3xl bg-white p-4 shadow-sm shadow-emerald-100 ring-1 ring-emerald-100 dark:bg-slate-800 dark:shadow-slate-900 dark:ring-emerald-900/40">
+          <header className="mb-3">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {t('doctor:dashboard.inpatientTasksTitle')}
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              {t('doctor:dashboard.inpatientTasksSubtitle')}
+            </p>
+          </header>
+          <ul className="divide-y divide-slate-100 text-xs dark:divide-slate-700">
+            {inpatientTasks.map((task) => (
+              <li key={task.id} className="py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-900 dark:text-slate-100">{task.title.replace('Periodic Control: ', '')}</p>
+                    {task.patientName && (
+                      <p className="mt-0.5 text-slate-500 dark:text-slate-400">
+                        {t('doctor:dashboard.inpatientTaskPatient')}: <span className="font-medium text-slate-700 dark:text-slate-200">{task.patientName}</span>
+                      </p>
+                    )}
+                    {task.description && (
+                      <p className="mt-0.5 text-slate-400 dark:text-slate-500">{task.description}</p>
+                    )}
+                    {task.dueDate && (
+                      <p className="mt-0.5 text-[0.65rem] text-slate-400 dark:text-slate-500">
+                        {t('doctor:dashboard.inpatientTaskDue')}: {new Date(task.dueDate).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
+                    <Badge variant={task.priority === 'urgent' ? 'error' : task.priority === 'high' ? 'warning' : 'info'}>
+                      {task.priority}
+                    </Badge>
+                    <div className="flex gap-1.5">
+                      {task.patientId && (
+                        <button
+                          type="button"
+                          onClick={() => { setNoteTaskId(noteTaskId === task.id ? null : task.id); setNoteText('') }}
+                          className="rounded-lg border border-sky-200 px-2 py-0.5 text-[0.7rem] font-medium text-sky-700 hover:bg-sky-50 dark:border-sky-700 dark:text-sky-300 dark:hover:bg-sky-900/20"
+                        >
+                          {t('doctor:dashboard.taskAddNote')}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        disabled={completingId === task.id}
+                        onClick={() => void handleCompleteTask(task.id)}
+                        className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[0.7rem] font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
+                      >
+                        {completingId === task.id ? '…' : t('doctor:dashboard.taskDone')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Inline note form */}
+                {noteTaskId === task.id && (
+                  <div className="mt-2 space-y-2 rounded-2xl border border-sky-200 bg-sky-50/60 p-3 dark:border-sky-800 dark:bg-sky-900/10">
+                    <textarea
+                      rows={3}
+                      value={noteText}
+                      onChange={(e) => setNoteText(e.target.value)}
+                      placeholder={t('doctor:dashboard.taskNotePlaceholder')}
+                      className="w-full resize-none rounded-xl border border-sky-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-sky-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:border-sky-500"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={savingNote || !noteText.trim()}
+                        onClick={() => void handleSaveNote(task)}
+                        className="rounded-xl bg-sky-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-700 disabled:opacity-50"
+                      >
+                        {savingNote ? '…' : t('doctor:dashboard.taskNoteSave')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setNoteTaskId(null); setNoteText('') }}
+                        className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                      >
+                        {t('common:actions.cancel')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   )
 }

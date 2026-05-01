@@ -13,6 +13,16 @@ import type {
 } from './types'
 
 // ──────────────────────────────────────────────────────────
+// Neon returns PostgreSQL DATE/TIMESTAMPTZ columns as JS Date objects.
+// This helper safely converts them to YYYY-MM-DD strings.
+// ──────────────────────────────────────────────────────────
+function toDateStr(val: unknown): string {
+  if (val instanceof Date) return val.toISOString().slice(0, 10)
+  if (typeof val === 'string') return val.slice(0, 10)
+  return ''
+}
+
+// ──────────────────────────────────────────────────────────
 // Patient Profile
 // ──────────────────────────────────────────────────────────
 export async function fetchPatientProfile(patientId: string): Promise<PatientProfile> {
@@ -32,7 +42,7 @@ export async function fetchPatientProfile(patientId: string): Promise<PatientPro
     return {
       id: row.id as string,
       name: row.name as string,
-      dob: (row.dob as string | null) ?? '',
+      dob: toDateStr(row.dob),
       mrn: (row.mrn as string | null) ?? '',
       primaryCareProvider: (row.doctor_name as string | null) ?? '',
       insurance: (row.insurance as string | null) ?? '',
@@ -89,8 +99,8 @@ export async function fetchAppointments(patientId: string): Promise<AppointmentD
     `
     return rows.map((row) => ({
       id: row.id as string,
-      date: row.date as string,
-      time: row.time as string,
+      date: toDateStr(row.date),
+      time: (row.time as string | null) ?? '',
       provider: (row.doctor_name as string | null) ?? '',
       providerId: row.doctor_id as string,
       type: row.type as string,
@@ -143,8 +153,8 @@ export async function bookAppointment(payload: {
     const docRows = await sql`SELECT name FROM profiles WHERE id = ${payload.doctorId} LIMIT 1`
     return {
       id: row.id as string,
-      date: row.date as string,
-      time: row.time as string,
+      date: toDateStr(row.date),
+      time: (row.time as string | null) ?? '',
       provider: (docRows[0]?.name as string | null) ?? '',
       providerId: row.doctor_id as string,
       type: row.type as string,
@@ -335,7 +345,7 @@ export async function fetchTestResults(patientId: string): Promise<TestResultDTO
     `
     return rows.map((row) => ({
       id: row.id as string,
-      date: row.date as string,
+      date: toDateStr(row.date),
       type: row.type as string,
       summary: row.summary as string,
       status: row.status as TestResultDTO['status'],
@@ -441,7 +451,7 @@ export async function fetchMessages(patientId: string): Promise<MessageDTO[]> {
       subject: row.subject as string,
       preview: ((row.body as string) ?? '').slice(0, 100),
       body: row.body as string,
-      date: (row.created_at as string).slice(0, 10),
+      date: toDateStr(row.created_at),
       read: row.read as boolean,
       parentId: row.parent_id as string | null,
     }))
@@ -469,7 +479,7 @@ export async function fetchMessages(patientId: string): Promise<MessageDTO[]> {
       subject: row.subject as string,
       preview: ((row.body as string) ?? '').slice(0, 100),
       body: row.body as string,
-      date: (row.created_at as string).slice(0, 10),
+      date: toDateStr(row.created_at),
       read: row.read as boolean,
       parentId: row.parent_id as string | null,
     }
@@ -497,7 +507,7 @@ export async function sendMessage(
       subject: row.subject as string,
       preview: (row.body as string).slice(0, 100),
       body: row.body as string,
-      date: (row.created_at as string).slice(0, 10),
+      date: toDateStr(row.created_at),
       read: row.read as boolean,
     }
   }

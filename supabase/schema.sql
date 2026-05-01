@@ -529,3 +529,83 @@ create index if not exists idx_password_reset_token on password_reset_tokens(tok
 -- ──────────────────────────────────────────────────────────────
 alter table profiles add column if not exists google_id text unique;
 create index if not exists idx_profiles_google_id on profiles(google_id);
+
+-- ──────────────────────────────────────────────────────────────
+-- INPATIENT MANAGEMENT
+-- ──────────────────────────────────────────────────────────────
+create table if not exists rooms (
+  id         uuid primary key default gen_random_uuid(),
+  number     text not null unique,
+  floor      int  not null default 1,
+  wing       text,
+  type       text not null default 'general'
+             check (type in ('general','icu','surgical','pediatric','maternity','isolation')),
+  capacity   int  not null default 1,
+  status     text not null default 'available'
+             check (status in ('available','occupied','maintenance','reserved')),
+  notes      text,
+  created_at timestamptz default now()
+);
+alter table rooms enable row level security;
+create policy "Authenticated users can read rooms" on rooms for select using (auth.role() = 'authenticated');
+create policy "Personnel can update rooms"         on rooms for update using (auth.role() = 'authenticated');
+create policy "Admins can insert rooms"            on rooms for insert with check (
+  exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin')
+);
+create policy "Admins can delete rooms"            on rooms for delete using (
+  exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin')
+);
+
+create table if not exists admissions (
+  id                 uuid primary key default gen_random_uuid(),
+  patient_id         uuid not null references profiles(id) on delete cascade,
+  room_id            uuid references rooms(id) on delete set null,
+  admitted_by        uuid references profiles(id),
+  primary_doctor_id  uuid references profiles(id),
+  admission_type     text not null default 'elective'
+                     check (admission_type in ('emergency','elective','transfer')),
+  diagnosis          text,
+  notes              text,
+  admitted_at        timestamptz not null default now(),
+  expected_discharge date,
+  discharged_at      timestamptz,
+  status             text not null default 'active'
+                     check (status in ('active','discharged','transferred')),
+  created_at         timestamptz default now()
+);
+alter table admissions enable row level security;
+create policy "Authenticated users can read admissions"  on admissions for select using (auth.role() = 'authenticated');
+create policy "Personnel can insert admissions"          on admissions for insert with check (auth.role() = 'authenticated');
+create policy "Personnel can update admissions"          on admissions for update using (auth.role() = 'authenticated');
+
+create table if not exists periodic_controls (
+  id              uuid primary key default gen_random_uuid(),
+  admission_id    uuid not null references admissions(id) on delete cascade,
+  patient_id      uuid not null references profiles(id),
+  title           text not null,
+  description     text,
+  frequency_hours numeric not null check (frequency_hours > 0),
+  next_due        timestamptz not null,
+  doctor_id       uuid references profiles(id),
+  nurse_id        uuid references profiles(id),
+  created_by      uuid not null references profiles(id),
+  active          boolean not null default true,
+  created_at      timestamptz default now()
+);
+alter table periodic_controls enable row level security;
+create policy "Authenticated users can read periodic_controls"  on periodic_controls for select using (auth.role() = 'authenticated');
+create policy "Personnel can insert periodic_controls"          on periodic_controls for insert with check (auth.role() = 'authenticated');
+create policy "Personnel can update periodic_controls"          on periodic_controls for update using (auth.role() = 'authenticated');
+
+-- Seed rooms
+insert into rooms (number, floor, wing, type) values
+  ('101',1,'A','general'),('102',1,'A','general'),('103',1,'A','general'),
+  ('104',1,'A','general'),('105',1,'A','general'),
+  ('201',2,'B','general'),('202',2,'B','general'),('203',2,'B','general'),
+  ('204',2,'B','general'),('205',2,'B','general'),
+  ('ICU-1',3,'ICU','icu'),('ICU-2',3,'ICU','icu'),('ICU-3',3,'ICU','icu'),
+  ('SURG-1',2,'C','surgical'),('SURG-2',2,'C','surgical'),
+  ('PEDS-1',1,'D','pediatric'),('PEDS-2',1,'D','pediatric'),
+  ('MAT-1',4,'E','maternity'),('MAT-2',4,'E','maternity'),
+  ('ISO-1',3,'F','isolation'),('ISO-2',3,'F','isolation')
+on conflict (number) do nothing;

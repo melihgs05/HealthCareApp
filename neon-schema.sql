@@ -317,3 +317,70 @@ $$ language plpgsql;
 create or replace trigger on_profile_created
   after insert on profiles
   for each row execute procedure handle_new_profile();
+
+-- ──────────────────────────────────────────────────────────────
+-- INPATIENT MANAGEMENT
+-- ──────────────────────────────────────────────────────────────
+create table if not exists rooms (
+  id         uuid primary key default gen_random_uuid(),
+  number     text not null unique,
+  floor      int  not null default 1,
+  wing       text,
+  type       text not null default 'general'
+             check (type in ('general','icu','surgical','pediatric','maternity','isolation')),
+  capacity   int  not null default 1,
+  status     text not null default 'available'
+             check (status in ('available','occupied','maintenance','reserved')),
+  notes      text,
+  created_at timestamptz default now()
+);
+
+create table if not exists admissions (
+  id                 uuid primary key default gen_random_uuid(),
+  patient_id         uuid not null references profiles(id) on delete cascade,
+  room_id            uuid references rooms(id) on delete set null,
+  admitted_by        uuid references profiles(id),
+  primary_doctor_id  uuid references profiles(id),
+  admission_type     text not null default 'elective'
+                     check (admission_type in ('emergency','elective','transfer')),
+  diagnosis          text,
+  notes              text,
+  admitted_at        timestamptz not null default now(),
+  expected_discharge date,
+  discharged_at      timestamptz,
+  status             text not null default 'active'
+                     check (status in ('active','discharged','transferred')),
+  created_at         timestamptz default now()
+);
+
+create index if not exists idx_admissions_patient on admissions(patient_id);
+create index if not exists idx_admissions_room    on admissions(room_id);
+create index if not exists idx_admissions_status  on admissions(status);
+
+create table if not exists periodic_controls (
+  id              uuid primary key default gen_random_uuid(),
+  admission_id    uuid not null references admissions(id) on delete cascade,
+  patient_id      uuid not null references profiles(id),
+  title           text not null,
+  description     text,
+  frequency_hours numeric not null check (frequency_hours > 0),
+  next_due        timestamptz not null,
+  doctor_id       uuid references profiles(id),
+  nurse_id        uuid references profiles(id),
+  created_by      uuid not null references profiles(id),
+  active          boolean not null default true,
+  created_at      timestamptz default now()
+);
+
+-- Seed rooms
+insert into rooms (number, floor, wing, type) values
+  ('101',1,'A','general'),('102',1,'A','general'),('103',1,'A','general'),
+  ('104',1,'A','general'),('105',1,'A','general'),
+  ('201',2,'B','general'),('202',2,'B','general'),('203',2,'B','general'),
+  ('204',2,'B','general'),('205',2,'B','general'),
+  ('ICU-1',3,'ICU','icu'),('ICU-2',3,'ICU','icu'),('ICU-3',3,'ICU','icu'),
+  ('SURG-1',2,'C','surgical'),('SURG-2',2,'C','surgical'),
+  ('PEDS-1',1,'D','pediatric'),('PEDS-2',1,'D','pediatric'),
+  ('MAT-1',4,'E','maternity'),('MAT-2',4,'E','maternity'),
+  ('ISO-1',3,'F','isolation'),('ISO-2',3,'F','isolation')
+on conflict (number) do nothing;

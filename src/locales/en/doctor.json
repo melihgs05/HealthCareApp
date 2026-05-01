@@ -38,6 +38,19 @@
     "addNote": "Add note",
     "ePrescribe": "E-prescribe",
     "orderLab": "Order lab",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "inpatientTasksTitle": "Inpatient Tasks",
+    "inpatientTasksSubtitle": "Periodic control tasks assigned to you from inpatient admissions.",
+    "inpatientTasksEmpty": "No inpatient tasks assigned.",
+    "inpatientTaskPatient": "Patient",
+    "inpatientTaskDue": "Due",
+    "taskDone": "Mark Done",
+    "taskAddNote": "Add Note",
+    "taskNotePlaceholder": "Write a clinical note for this patient's chart…",
+    "taskNoteSave": "Save Note",
+    "taskCompleteSuccess": "Task marked as completed.",
+    "taskCompleteError": "Failed to update task.",
+    "taskNoteSuccess": "Note added to patient chart.",
+    "taskNoteError": "Failed to save note."
   }
 }

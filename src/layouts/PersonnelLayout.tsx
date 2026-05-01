@@ -24,6 +24,7 @@ export function PersonnelLayout() {
     { to: '/staff/messages', label: t('admin:personnel.nav.messages') },
     ...(subrole === 'lab' ? [{ to: '/staff/lab', label: t('admin:personnel.nav.labOrders') }] : []),
     ...(subrole === 'desk' ? [{ to: '/staff/register', label: t('admin:personnel.nav.registerPatient') }] : []),
+    ...(subrole === 'nurse' || subrole === 'desk' ? [{ to: '/staff/inpatient', label: t('admin:personnel.nav.inpatient') }] : []),
     { to: '/staff/settings', label: t('admin:personnel.nav.settings') },
   ]
 

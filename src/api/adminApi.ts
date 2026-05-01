@@ -9,6 +9,9 @@ import type {
   PersonnelPermissionDTO,
   PersonnelTaskDTO,
   PersonnelSubrole,
+  RoomDTO,
+  RoomType,
+  RoomStatus,
 } from './types'
 
 // ──────────────────────────────────────────────────────────
@@ -360,6 +363,7 @@ export async function adminCreateUser(payload: {
 export async function createPatientRecord(payload: {
   name: string
   email: string
+  password?: string
   dob: string
   insurance?: string
   primaryDoctorId?: string
@@ -371,26 +375,37 @@ export async function createPatientRecord(payload: {
   const tempEmail = payload.email.toLowerCase().trim()
   const mrn = `MRN-${Date.now().toString(36).toUpperCase()}`
   const profileId = crypto.randomUUID()
+  const passwordHash = payload.password ? await hashPassword(payload.password) : null
 
   if (isNeonConfigured) {
     const sql = getNeonSql()
+    // The on_profile_created trigger auto-creates the patients row with a generated MRN.
+    // We INSERT the profile first, then UPDATE the patients row with the real data.
     await sql`
-      INSERT INTO profiles (id, name, email, role, phone)
-      VALUES (${profileId}, ${payload.name}, ${tempEmail}, 'patient', ${payload.phone ?? null})
+      INSERT INTO profiles (id, name, email, role, phone, password_hash)
+      VALUES (${profileId}, ${payload.name}, ${tempEmail}, 'patient', ${payload.phone ?? null}, ${passwordHash})
     `
+    // Trigger ran — update the auto-created patients row with actual intake data
     await sql`
-      INSERT INTO patients (id, mrn, dob, insurance, primary_doctor_id, city, address)
-      VALUES (
-        ${profileId}, ${mrn}, ${payload.dob},
-        ${payload.insurance ?? null}, ${payload.primaryDoctorId ?? null},
-        ${payload.city ?? null}, ${payload.address ?? null}
-      )
+      UPDATE patients SET
+        dob                = ${payload.dob},
+        insurance          = ${payload.insurance ?? null},
+        primary_doctor_id  = ${payload.primaryDoctorId ?? null},
+        city               = ${payload.city ?? null},
+        address            = ${payload.address ?? null}
+      WHERE id = ${profileId}
     `
+    // Fetch the MRN the trigger generated
+    const mrnRows = await sql`SELECT mrn FROM patients WHERE id = ${profileId} LIMIT 1`
+    const generatedMrn = ((mrnRows as Record<string, unknown>[])[0]?.mrn as string) ?? mrn
     await sql`
       INSERT INTO activity_log (user_id, type, description)
-      VALUES (${payload.createdBy}, 'Document', ${'Created new patient record for ' + payload.name + ' (' + mrn + ')'})
+      VALUES (${payload.createdBy}, 'Document', ${'Created new patient record for ' + payload.name + ' (' + generatedMrn + ')'})
     `
-    return { profileId, mrn }
+    if (payload.password) {
+      void sendWelcomeWithCredentials(tempEmail, payload.name, payload.password, 'patient')
+    }
+    return { profileId, mrn: generatedMrn }
   }
 
   const { data: profile, error: pe } = await supabase
@@ -406,6 +421,11 @@ export async function createPatientRecord(payload: {
     .single()
 
   if (pe) throw new Error(pe.message)
+
+  if (payload.password) {
+    const hash = await hashPassword(payload.password)
+    await supabase.from('profiles').update({ password_hash: hash }).eq('id', profileId)
+  }
 
   const { error: pate } = await supabase.from('patients').insert({
     id: profile.id,
@@ -424,6 +444,10 @@ export async function createPatientRecord(payload: {
     type: 'Document',
     description: `Created new patient record for ${payload.name} (${mrn})`,
   })
+
+  if (payload.password) {
+    void sendWelcomeWithCredentials(tempEmail, payload.name, payload.password, 'patient')
+  }
 
   return { profileId: profile.id, mrn }
 }
@@ -489,5 +513,97 @@ export async function fetchAllPersonnelTasks(): Promise<PersonnelTaskDTO[]> {
     dueDate: row.due_date as string | null,
     createdAt: row.created_at as string,
   }))
+}
+
+// ──────────────────────────────────────────────────────────
+// Room Management (admin CRUD)
+// ──────────────────────────────────────────────────────────
+
+function mapRoom(row: Record<string, unknown>): RoomDTO {
+  return {
+    id: row.id as string,
+    number: row.number as string,
+    floor: row.floor as number,
+    wing: row.wing as string | null,
+    type: row.type as RoomType,
+    capacity: row.capacity as number,
+    status: row.status as RoomStatus,
+    notes: row.notes as string | null,
+  }
+}
+
+export async function adminFetchRooms(): Promise<RoomDTO[]> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`SELECT id, number, floor, wing, type, capacity, status, notes FROM rooms ORDER BY floor, number`
+    return (rows as Record<string, unknown>[]).map(mapRoom)
+  }
+  const { data, error } = await supabase.from('rooms').select('id, number, floor, wing, type, capacity, status, notes').order('floor').order('number')
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((r: Record<string, unknown>) => mapRoom(r))
+}
+
+export async function adminCreateRoom(payload: {
+  number: string
+  floor: number
+  wing: string | null
+  type: RoomType
+  capacity: number
+  status: RoomStatus
+  notes: string | null
+}): Promise<RoomDTO> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      INSERT INTO rooms (number, floor, wing, type, capacity, status, notes)
+      VALUES (${payload.number}, ${payload.floor}, ${payload.wing}, ${payload.type}, ${payload.capacity}, ${payload.status}, ${payload.notes})
+      RETURNING id, number, floor, wing, type, capacity, status, notes
+    `
+    return mapRoom((rows as Record<string, unknown>[])[0])
+  }
+  const { data, error } = await supabase.from('rooms').insert({
+    number: payload.number, floor: payload.floor, wing: payload.wing,
+    type: payload.type, capacity: payload.capacity, status: payload.status, notes: payload.notes,
+  }).select('id, number, floor, wing, type, capacity, status, notes').single()
+  if (error) throw new Error(error.message)
+  return mapRoom(data as Record<string, unknown>)
+}
+
+export async function adminUpdateRoom(
+  id: string,
+  payload: { number: string; floor: number; wing: string | null; type: RoomType; capacity: number; status: RoomStatus; notes: string | null }
+): Promise<RoomDTO> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    const rows = await sql`
+      UPDATE rooms SET
+        number   = ${payload.number},
+        floor    = ${payload.floor},
+        wing     = ${payload.wing},
+        type     = ${payload.type},
+        capacity = ${payload.capacity},
+        status   = ${payload.status},
+        notes    = ${payload.notes}
+      WHERE id = ${id}
+      RETURNING id, number, floor, wing, type, capacity, status, notes
+    `
+    return mapRoom((rows as Record<string, unknown>[])[0])
+  }
+  const { data, error } = await supabase.from('rooms').update({
+    number: payload.number, floor: payload.floor, wing: payload.wing,
+    type: payload.type, capacity: payload.capacity, status: payload.status, notes: payload.notes,
+  }).eq('id', id).select('id, number, floor, wing, type, capacity, status, notes').single()
+  if (error) throw new Error(error.message)
+  return mapRoom(data as Record<string, unknown>)
+}
+
+export async function adminDeleteRoom(id: string): Promise<void> {
+  if (isNeonConfigured) {
+    const sql = getNeonSql()
+    await sql`DELETE FROM rooms WHERE id = ${id}`
+    return
+  }
+  const { error } = await supabase.from('rooms').delete().eq('id', id)
+  if (error) throw new Error(error.message)
 }
 

@@ -2,6 +2,12 @@ import { supabase } from '../lib/supabase'
 
 type NeonRow = Record<string, unknown>
 import { isNeonConfigured, getNeonSql } from '../lib/neonClient'
+
+/** Normalize a Neon/Postgres date value (Date object or string) to YYYY-MM-DD string */
+function toDateString(val: unknown): string {
+  if (val instanceof Date) return val.toISOString().slice(0, 10)
+  return String(val ?? '')
+}
 import type {
   DoctorScheduleDTO,
   PatientSummaryDTO,
@@ -135,89 +141,85 @@ export async function fetchDoctorScheduleByDate(
 export async function fetchPatientList(doctorId: string): Promise<PatientSummaryDTO[]> {
   if (isNeonConfigured) {
     const sql = getNeonSql()
+    // Single efficient query: primary patients UNION appointment-linked patients
     const patients = await sql`
-      SELECT pat.id, pat.mrn, pat.dob, pat.insurance, p.name
-      FROM patients pat
-      LEFT JOIN profiles p ON p.id = pat.id
+      SELECT DISTINCT p.id, p.name,
+        pat.mrn, pat.dob::text AS dob, pat.insurance,
+        (SELECT a.date::text FROM appointments a
+           WHERE a.patient_id = p.id AND a.status = 'Completed'
+           ORDER BY a.date DESC LIMIT 1) AS last_visit,
+        (SELECT a.date::text FROM appointments a
+           WHERE a.patient_id = p.id AND a.status = 'Upcoming'
+           ORDER BY a.date ASC  LIMIT 1) AS next_appt,
+        (SELECT COUNT(*)::int FROM medications m
+           WHERE m.patient_id = p.id AND m.active = true) AS med_count
+      FROM profiles p
+      JOIN patients pat ON pat.id = p.id
       WHERE pat.primary_doctor_id = ${doctorId}
+         OR p.id IN (
+           SELECT DISTINCT patient_id FROM appointments WHERE doctor_id = ${doctorId}
+         )
+      ORDER BY p.name
     `
-    const results: PatientSummaryDTO[] = []
-    for (const pat of (patients as NeonRow[])) {
-      const [lastApptRows, nextApptRows, medRows] = await Promise.all([
-        sql`SELECT date FROM appointments WHERE patient_id = ${pat.id as string} AND status = 'Completed' ORDER BY date DESC LIMIT 1`,
-        sql`SELECT date FROM appointments WHERE patient_id = ${pat.id as string} AND status = 'Upcoming' ORDER BY date ASC LIMIT 1`,
-        sql`SELECT COUNT(*) AS cnt FROM medications WHERE patient_id = ${pat.id as string} AND active = true`,
-      ])
-      const lastVisit = ((lastApptRows as NeonRow[])[0]?.date as string) ?? '—'
-      const nextVisit = ((nextApptRows as NeonRow[])[0]?.date as string) ?? '—'
-      const status: PatientSummaryDTO['status'] = (nextApptRows as NeonRow[])[0] ? 'Follow-up' : 'Active'
-      results.push({
-        id: pat.id as string,
-        name: (pat.name as string) ?? 'Unknown',
-        mrn: pat.mrn as string,
-        dob: pat.dob as string,
-        insurance: pat.insurance as string | null,
-        primaryDoctorId: doctorId,
-        lastVisit,
-        nextAppt: nextVisit,
-        status,
-        activeMedicationCount: Number((medRows as NeonRow[])[0]?.cnt ?? 0),
-      })
-    }
-    return results
+    return (patients as NeonRow[]).map((row) => ({
+      id: row.id as string,
+      name: (row.name as string) ?? 'Unknown',
+      mrn: (row.mrn as string) ?? '',
+      dob: (row.dob as string) ?? '',
+      insurance: row.insurance as string | null,
+      primaryDoctorId: doctorId,
+      lastVisit: (row.last_visit as string) ?? '—',
+      nextAppt: (row.next_appt as string) ?? '—',
+      status: row.next_appt ? 'Follow-up' : 'Active',
+      activeMedicationCount: Number(row.med_count ?? 0),
+    }))
   }
 
-  const { data: assignedPatients, error } = await supabase
-    .from('patients')
-    .select('id, mrn, dob, insurance, profiles!patients_id_fkey(name)')
-    .eq('primary_doctor_id', doctorId)
-  if (error) throw new Error(error.message)
+  // Supabase: fetch primary patients + appointment-linked patients
+  const [{ data: assignedPatients }, { data: apptPatients }] = await Promise.all([
+    supabase
+      .from('patients')
+      .select('id, mrn, dob, insurance, profiles!patients_id_fkey(name)')
+      .eq('primary_doctor_id', doctorId),
+    supabase
+      .from('appointments')
+      .select('patient_id, patients!appointments_patient_id_fkey(id, mrn, dob, insurance, profiles!patients_id_fkey(name))')
+      .eq('doctor_id', doctorId),
+  ])
+
+  // Deduplicate by patient id
+  const patMap = new Map<string, Record<string, unknown>>()
+  for (const p of assignedPatients ?? []) patMap.set(p.id as string, p as Record<string, unknown>)
+  for (const a of apptPatients ?? []) {
+    const p = a.patients as unknown as Record<string, unknown> | null
+    if (p && !patMap.has(p.id as string)) patMap.set(p.id as string, p)
+  }
 
   const results: PatientSummaryDTO[] = []
-  for (const pat of assignedPatients ?? []) {
+  for (const [, pat] of patMap) {
     const profile = (pat.profiles as unknown as { name: string } | null)
 
-    const { data: lastAppt } = await supabase
-      .from('appointments')
-      .select('date, status')
-      .eq('patient_id', pat.id)
-      .eq('status', 'Completed')
-      .order('date', { ascending: false })
-      .limit(1)
-
-    const { data: nextAppt } = await supabase
-      .from('appointments')
-      .select('date')
-      .eq('patient_id', pat.id)
-      .eq('status', 'Upcoming')
-      .order('date', { ascending: true })
-      .limit(1)
-
-    const { count: medCount } = await supabase
-      .from('medications')
-      .select('id', { count: 'exact', head: true })
-      .eq('patient_id', pat.id)
-      .eq('active', true)
-
-    const lastVisit = lastAppt?.[0]?.date ?? '—'
-    const nextVisit = nextAppt?.[0]?.date ?? '—'
-    const hasUpcoming = Boolean(nextAppt?.[0])
-    const status: PatientSummaryDTO['status'] = hasUpcoming ? 'Follow-up' : 'Active'
+    const [{ data: lastAppt }, { data: nextAppt }, { count: medCount }] = await Promise.all([
+      supabase.from('appointments').select('date').eq('patient_id', pat.id as string).eq('status', 'Completed').order('date', { ascending: false }).limit(1),
+      supabase.from('appointments').select('date').eq('patient_id', pat.id as string).eq('status', 'Upcoming').order('date', { ascending: true }).limit(1),
+      supabase.from('medications').select('id', { count: 'exact', head: true }).eq('patient_id', pat.id as string).eq('active', true),
+    ])
 
     results.push({
-      id: pat.id,
+      id: pat.id as string,
       name: profile?.name ?? 'Unknown',
-      mrn: pat.mrn,
-      dob: pat.dob,
-      insurance: pat.insurance,
+      mrn: pat.mrn as string,
+      dob: pat.dob as string,
+      insurance: pat.insurance as string | null,
       primaryDoctorId: doctorId,
-      lastVisit,
-      nextAppt: nextVisit,
-      status,
+      lastVisit: lastAppt?.[0]?.date ?? '—',
+      nextAppt: nextAppt?.[0]?.date ?? '—',
+      status: nextAppt?.[0] ? 'Follow-up' : 'Active',
       activeMedicationCount: medCount ?? 0,
     })
   }
 
+  results.sort((a, b) => a.name.localeCompare(b.name))
   return results
 }
 
@@ -260,7 +262,7 @@ export async function fetchAppointmentById(appointmentId: string): Promise<Appoi
     const row = apptRows[0]
     return {
       id: row.id as string,
-      date: row.date as string,
+      date: toDateString(row.date),
       time: row.time as string,
       provider: (row.doctor_name as string) ?? '',
       providerId: row.doctor_id as string,
@@ -384,7 +386,7 @@ export async function fetchBlockedTimes(
       : await sql`SELECT id, date, start_time, end_time, reason FROM doctor_blocked_times WHERE doctor_id = ${doctorId} ORDER BY date`
     return (rows as NeonRow[]).map((row) => ({
       id: row.id as string,
-      date: row.date as string,
+      date: toDateString(row.date),
       startTime: row.start_time as string,
       endTime: row.end_time as string,
       reason: row.reason as string | null,
@@ -402,7 +404,7 @@ export async function fetchBlockedTimes(
 
   return (data ?? []).map((row: Record<string, unknown>) => ({
     id: row.id as string,
-    date: row.date as string,
+    date: toDateString(row.date),
     startTime: row.start_time as string,
     endTime: row.end_time as string,
     reason: row.reason as string | null,
@@ -830,7 +832,7 @@ export async function fetchPatientTestResults(patientId: string): Promise<TestRe
     `
     return (rows as NeonRow[]).map((row) => ({
       id: row.id as string,
-      date: row.date as string,
+      date: toDateString(row.date),
       type: row.type as string,
       summary: row.summary as string,
       status: row.status as TestResultDTO['status'],
@@ -847,7 +849,7 @@ export async function fetchPatientTestResults(patientId: string): Promise<TestRe
 
   return (data ?? []).map((row: Record<string, unknown>) => ({
     id: row.id as string,
-    date: row.date as string,
+    date: toDateString(row.date),
     type: row.type as string,
     summary: row.summary as string,
     status: row.status as TestResultDTO['status'],
@@ -869,7 +871,7 @@ export async function fetchPatientAppointmentHistory(
     `
     return (rows as NeonRow[]).map((row) => ({
       id: row.id as string,
-      date: row.date as string,
+      date: toDateString(row.date),
       time: row.time as string,
       provider: '',
       providerId: row.doctor_id as string,
@@ -890,7 +892,7 @@ export async function fetchPatientAppointmentHistory(
 
   return (data ?? []).map((row: Record<string, unknown>) => ({
     id: row.id as string,
-    date: row.date as string,
+    date: toDateString(row.date),
     time: row.time as string,
     provider: '',
     providerId: row.doctor_id as string,
